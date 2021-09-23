@@ -6,11 +6,11 @@ In April 2021, David Robbins sent me a CSV file (txcardlookup-6Apr2021) that lis
 
 The `scrapevgsi.py` script retrieves PIDs ("VisionID"s) from a file, and outputs a tab-separated file that shows the fields defined in the `domIDs` array. The script also delays a few seconds between requests from VGSI to avoid alerts.
 
-To run the script, using the default file of PIDs, and outputting to `output.tsv`:
+To run the script, using the default file of PIDs, and outputting to a file named `TODAYS-DATE.tsv`:
 
 ```
 cd ScrapingVGSI
-python ./scrapevgsi.py -i ./taxcardlookup-6Apr2021.txt -o output.tsv
+python ./scrapevgsi.py -i ./taxcardlookup-6Apr2021.txt -o TODAYS-DATE.tsv
 ```
 
 There's a `-d` debug option that eliminates the delay between requests (for faster testing).

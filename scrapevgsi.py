@@ -70,6 +70,12 @@ domIDs =  [
     [ "MainContent_lblZone", "Zoning District" ],
     [ "MainContent_lblBldCount", "# Buildings" ],
     ]
+tableIDs = [
+    "Year",
+    "Improvements",
+    "Land",
+    "Total",
+]
 
 '''
 Main Function
@@ -98,12 +104,17 @@ def main(argv=None):
 
     infile = VisionIDFile(fi)
 
+    # Print the heading row, with all the column names
     output_string = ""
     for x in range(len(domIDs)):
         output_string += domIDs[x][1] + "\t"
+    for x in range(len(tableIDs)):
+        output_string += tableIDs[x] + "\t"
     print(output_string, file=fo)
 
+    recordCount = 0
     while True:
+        recordCount += 1
         id = infile.readNextVisionID()
         if id == "":  # EOF
             break
@@ -125,7 +136,7 @@ def main(argv=None):
 
         inStr = page.text
         if inStr.find('There was an error loading the parcel') >= 0: # string is present
-            output_string = "%s\tProblem loading parcel" % (id)
+            output_string = "%s\tProblem loading parcel PID %s" % (id, id)
             print(output_string, file=fo)
             continue
 
@@ -133,11 +144,23 @@ def main(argv=None):
 
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
+
+        # First print the random fields from the page
         output_string = ""
         for x in range(len(domIDs)):
             result = soup.find(id=domIDs[x][0])
             output_string += result.text + "\t"
-        output_string += current_time
+
+        # Print the most recent date, Improvements, Land, and Total
+        table = soup.find(
+            lambda tag: tag.name == 'table' and tag.has_attr('id') and tag['id'] == "MainContent_grdCurrentValueAppr")
+        rows = table.findAll(lambda tag: tag.name == 'tr')
+        vals = rows[1].contents # contents of the row
+        for x in range(1,5):
+            output_string += vals[x].text + "\t"
+
+        # Tack on a time stamp and row counter in separate columns
+        output_string += current_time + "\t%d"%(recordCount)
         print(output_string, file=fo)
         print(output_string)
 
