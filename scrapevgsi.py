@@ -13,11 +13,8 @@ VisionID	TaxMap	Lot
 125	201	88
 127	201	90
 
-Output is a CSV file that contains the fields selected  using the #id fields
+Output is a TSV file that contains the fields selected  using the #id fields
 from the HTML file. Those IDs are contained in an array of text strings.
-
-stdin defaults to taxcardlookup-6Apr2021.csv
-stdout defaults to ./output.csv
 
 '''
 
@@ -25,6 +22,10 @@ import sys
 import argparse
 import requests
 from bs4 import BeautifulSoup
+import time
+from datetime import datetime
+import random
+
 import re
 import os
 
@@ -56,33 +57,19 @@ class VisionIDFile:
         vals = line.split(",")
         return vals[0]
 
-
-        # line = self.theFile.readline()
-        # if line == "":
-        #     return []
-        # secString = re.findall("[ ]\d\d:\d\d:\d\d[ ]", line)[0]
-        # ipAdrs = re.findall("SRC=(.*?)[ ]", line)[0]
-        #
-        # [hh, mm, ss] = secString.split(":")
-        #
-        # connTime = 3600 * int(hh) + 60 * int(mm) + int(ss)
-        # if connTime < self.prevConnTime:
-        #     return []  # got into next day's data - treat as EOF
-        # self.prevConnTime = connTime
-        #
-        # return [connTime, ipAdrs]
-
-
-'''
-hhmm - format number of seconds as "hh:mm"
-'''
-
-
-def hhmm(secs):
-    roundedsecs = secs + 30
-    hh = int(roundedsecs / 3600)
-    return '%02d:%02d' % (hh, (roundedsecs - hh * 3600) / 60)
-
+# IDs of DOM elements whose values should be plucked up and displayed
+domIDs =  [
+    [ "MainContent_lblPid", "PID" ],
+    [ "MainContent_lblLocation", "Street Address" ],
+    [ "MainContent_lblMblu",  "MBLU" ],
+    [ "MainContent_lblGenAssessment", "Assessment" ],
+    [ "MainContent_lblGenAppraisal", "Appraisal" ],
+    [ "MainContent_lblLndAcres", "Lot Size (acres)" ],
+    [ "MainContent_lblUseCode", "Land Use Code" ],
+    [ "MainContent_lblUseCodeDescription", "Description" ],
+    [ "MainContent_lblZone", "Zoning District" ],
+    [ "MainContent_lblBldCount", "# Buildings" ],
+    ]
 
 '''
 Main Function
@@ -95,15 +82,15 @@ Build up dictionary for each IP address
 
 
 def main(argv=None):
-    #try:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-i", '--infile', nargs='?', type=argparse.FileType('rU'), default=sys.stdin)
-    parser.add_argument("-o", '--outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
-    parser.add_argument("-e", '--errfile', nargs='?', type=argparse.FileType('w'), default=sys.stderr)
-    # parser.add_argument("--notables", action="store_false", help="Don't print the tables")
-    theArgs = parser.parse_args()
-    #except Exception, err:
-    #    return str(err)
+    try:
+        parser = argparse.ArgumentParser(description=__doc__)
+        parser.add_argument("-i", '--infile', nargs='?', type=argparse.FileType('rU'), default=sys.stdin)
+        parser.add_argument("-o", '--outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+        parser.add_argument("-e", '--errfile', nargs='?', type=argparse.FileType('w'), default=sys.stderr)
+        parser.add_argument('-d', '--debug', action="store_true", help="Enable the debug mode.")
+        theArgs = parser.parse_args()
+    except:
+        return "Error parsing arguments"
 
     fi = theArgs.infile  # the argument parsing returns open file objects
     fo = theArgs.outfile
@@ -111,27 +98,48 @@ def main(argv=None):
 
     infile = VisionIDFile(fi)
 
+    output_string = ""
+    for x in range(len(domIDs)):
+        output_string += domIDs[x][1] + "\t"
+    print(output_string, file=fo)
+
     while True:
         id = infile.readNextVisionID()
         if id == "":  # EOF
             break
 
-        # print id
+        if not theArgs.debug:
+            time.sleep (1+3*random.random()) # wait a few seconds before next query
+
         url = "http://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(id)
 
-        page = requests.get(url)
+        if theArgs.debug:
+            print(url, file=fe)
+
+        try:
+            page = requests.get(url)
+        except:
+            output_string = "%s\tCan't reach the server"%(id)
+            print(output_string, file=fo)
+            continue
+
+        inStr = page.text
+        if inStr.find('There was an error loading the parcel') >= 0: # string is present
+            output_string = "%s\tProblem loading parcel" % (id)
+            print(output_string, file=fo)
+            continue
 
         soup = BeautifulSoup(page.content, "html.parser")
-        # print(page.text)
 
-
-
-        results = (soup.find(id="MainContent_ctl01_lblYearBuilt"))
-        print(results.text)
-        exit()
-        #
-    # print >> fe, "Total addresses blacklisted: %d" % blacklistCount
-
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        output_string = ""
+        for x in range(len(domIDs)):
+            result = soup.find(id=domIDs[x][0])
+            output_string += result.text + "\t"
+        output_string += current_time
+        print(output_string, file=fo)
+        print(output_string)
 
 if __name__ == "__main__":
     sys.exit(main())
