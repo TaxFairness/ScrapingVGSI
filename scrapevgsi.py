@@ -34,7 +34,7 @@ import os
 """
 readNextVisionID(f)
 
-Reads a line from the input file, and returns the first comma-separated field.
+Reads a line from the input file, and returns the three comma-separated fields.
 Ignore lines that begin with # (they're comments)
 Return "" to signal EOF)
 
@@ -50,12 +50,12 @@ class VisionIDFile:
         while True:
             line = self.theFile.readline()
             if line == "":
-                return ""   # hit EOF
+                return []   # hit EOF
             if line[0] != "#":
                 break       # Non-comment line - break out of loop
 
         vals = line.split(",")
-        return vals[0]
+        return vals
 
 # IDs of DOM elements whose values should be plucked up and displayed
 domIDs =  [
@@ -115,14 +115,14 @@ def main(argv=None):
     recordCount = 0
     while True:
         recordCount += 1
-        id = infile.readNextVisionID()
-        if id == "":  # EOF
+        ids = infile.readNextVisionID()
+        if ids == []:  # EOF
             break
 
         if not theArgs.debug:
             time.sleep (1+3*random.random()) # wait a few seconds before next query
 
-        url = "http://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(id)
+        url = "http://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(ids[0])
 
         if theArgs.debug:
             print(url, file=fe)
@@ -130,13 +130,13 @@ def main(argv=None):
         try:
             page = requests.get(url)
         except:
-            output_string = "%s\tCan't reach the server"%(id)
+            output_string = "%s\tCan't reach the server"%(ids[0])
             print(output_string, file=fo)
             continue
 
         inStr = page.text
         if inStr.find('There was an error loading the parcel') >= 0: # string is present
-            output_string = "%s\tProblem loading parcel PID %s" % (id, id)
+            output_string = "%s\tProblem loading parcel PID %s, Map %s Lot %s" % (ids[0], ids[0], ids[1], ids[2])
             print(output_string, file=fo)
             continue
 
