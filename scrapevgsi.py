@@ -69,14 +69,23 @@ domIDs =  [
     [ "MainContent_lblUseCodeDescription", "Description" ],
     [ "MainContent_lblZone", "Zoning District" ],
     [ "MainContent_lblBldCount", "# Buildings" ],
-    ]
+   ]
 tableIDs = [
-    "Year",
+    "Appr. Year",
     "Improvements",
     "Land",
     "Total",
 ]
-
+saleDomIDs = [
+    [ "MainContent_lblPrice", "Recent Sale Price", ],
+    [ "MainContent_lblSaleDate", "Recent Sale Date" ]
+    ]
+saleTableIDs = [
+    "Recent Sale Price",
+    "Recent Sale Date",
+    "Prev Sale Price",
+    "Prev Sale Date",
+    ]
 '''
 Main Function
 
@@ -110,6 +119,8 @@ def main(argv=None):
         output_string += domIDs[x][1] + "\t"
     for x in range(len(tableIDs)):
         output_string += tableIDs[x] + "\t"
+    for x in range(len(saleTableIDs)):
+        output_string += saleTableIDs[x] + "\t"
     print(output_string, file=fo)
 
     recordCount = 0
@@ -151,13 +162,36 @@ def main(argv=None):
             result = soup.find(id=domIDs[x][0])
             output_string += result.text + "\t"
 
-        # Print the most recent date, Improvements, Land, and Total
+        # Print the most recent appraisal date, Improvements, Land, and Total
         table = soup.find(
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag['id'] == "MainContent_grdCurrentValueAppr")
         rows = table.findAll(lambda tag: tag.name == 'tr')
         vals = rows[1].contents # contents of the row
         for x in range(1,5):
             output_string += vals[x].text + "\t"
+
+        # Print the recent sale price and date
+        for x in range(len(saleDomIDs)):
+            result = soup.find(id=saleDomIDs[x][0])
+            output_string += result.text + "\t"
+
+        # Print the most recent non-zero sale price and date
+        # handle case where there isn't a value for either - just insert ""
+        recentSale = soup.find(id=saleDomIDs[0][0]).text
+        table = soup.find(
+            lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
+                'id'] == "MainContent_grdSales")
+        rows = table.findAll(lambda tag: tag.name == 'tr')
+        prevSalesStr = ""
+        for x in range(1,len(rows)):
+            vals = rows[x].contents
+            if vals[2].text == "$0" or vals[2].text == recentSale: # no new info
+                continue
+            prevSalesStr += vals[2].text + "\t" + vals[6].text + "\t"
+            break
+        if prevSalesStr == "":
+            prevSalesStr = "\t\t"
+        output_string += prevSalesStr
 
         # Tack on a time stamp and row counter in separate columns
         output_string += current_time + "\t%d"%(recordCount)
