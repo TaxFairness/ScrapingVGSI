@@ -54,14 +54,16 @@ class VisionIDFile:
             if line[0] != "#":
                 break       # Non-comment line - break out of loop
 
-        vals = line.split(",")
+        vals = line.strip().split(",")
         return vals
 
 # IDs of DOM elements whose values should be plucked up and displayed
 domIDs =  [
     [ "MainContent_lblPid", "PID" ],
+    # [ "MainContent_lblGenOwner", "Owner"],
     [ "MainContent_lblLocation", "Street Address" ],
     [ "MainContent_lblMblu",  "MBLU" ],
+    [ "MainContent_lblBp", "Book&Page"],
     [ "MainContent_lblGenAssessment", "Assessment" ],
     [ "MainContent_lblGenAppraisal", "Appraisal" ],
     [ "MainContent_lblLndAcres", "Lot Size (acres)" ],
@@ -187,7 +189,8 @@ def main(argv=None):
             vals = rows[x].contents
             if vals[2].text == "$0" or vals[2].text == recentSale: # no new info
                 continue
-            prevSalesStr += vals[2].text + "\t" + vals[6].text + "\t"
+            dateIx = len(vals)-2 # sometimes five columns, sometimes 6 :-(
+            prevSalesStr += vals[2].text + "\t" + vals[dateIx].text + "\t"
             break
         if prevSalesStr == "":
             prevSalesStr = "\t\t"

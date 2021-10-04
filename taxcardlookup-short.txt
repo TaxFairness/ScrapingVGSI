@@ -2,6 +2,7 @@
 # Mapping between Vision ID and the tax map/lot number,,
 # VisionID,TaxMap,Lot
 71,201,50
+34,201,27
 123,201,86
 125,201,88
 137,201,94.2
