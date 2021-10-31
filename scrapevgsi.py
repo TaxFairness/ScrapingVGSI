@@ -88,6 +88,10 @@ saleTableIDs = [
     "Prev Sale Price",
     "Prev Sale Date",
     ]
+valuationHistoryIDs = [
+    "Prev. Assess.",
+    "Prev. Apprais",
+]
 '''
 Main Function
 
@@ -123,6 +127,8 @@ def main(argv=None):
         output_string += tableIDs[x] + "\t"
     for x in range(len(saleTableIDs)):
         output_string += saleTableIDs[x] + "\t"
+    for x in range(len(valuationHistoryIDs)):
+        output_string += valuationHistoryIDs[x] + "\t"
     print(output_string, file=fo)
 
     recordCount = 0
@@ -195,6 +201,24 @@ def main(argv=None):
         if prevSalesStr == "":
             prevSalesStr = "\t\t"
         output_string += prevSalesStr
+
+        # Grab the most recent Assessment from the Valuation History
+        table = soup.find(
+            lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
+                'id'] == "MainContent_grdHistoryValuesAsmt")
+        rows = table.findAll(lambda tag: tag.name == 'tr')
+        vals = rows[1].contents
+        appr = vals[4].text
+        output_string += appr + "\t"
+
+        # Grab the most recent Appraisal from the Valuation History
+        table = soup.find(
+            lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
+                'id'] == "MainContent_grdHistoryValuesAppr")
+        rows = table.findAll(lambda tag: tag.name == 'tr')
+        vals = rows[1].contents
+        appr = vals[4].text
+        output_string += appr + "\t"
 
         # Tack on a time stamp and row counter in separate columns
         output_string += current_time + "\t%d"%(recordCount)
