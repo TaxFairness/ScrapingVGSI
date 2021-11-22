@@ -207,8 +207,11 @@ def main(argv=None):
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAsmt")
         rows = table.findAll(lambda tag: tag.name == 'tr')
-        vals = rows[1].contents
-        appr = vals[4].text
+        try:
+            vals = rows[1].contents
+            appr = vals[4].text
+        except:
+            appr=""
         output_string += appr + "\t"
 
         # Grab the most recent Appraisal from the Valuation History
@@ -216,8 +219,11 @@ def main(argv=None):
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAppr")
         rows = table.findAll(lambda tag: tag.name == 'tr')
-        vals = rows[1].contents
-        appr = vals[4].text
+        try:
+            vals = rows[1].contents
+            appr = vals[4].text
+        except:
+            appr=""
         output_string += appr + "\t"
 
         # Tack on a time stamp and row counter in separate columns

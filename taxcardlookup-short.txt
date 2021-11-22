@@ -7,3 +7,5 @@
 125,201,88
 137,201,94.2
 575,405,35
+# This is a comment, and should be skipped, even in the middle of the list
+103178,410,13.1200
