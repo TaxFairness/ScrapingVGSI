@@ -89,8 +89,12 @@ saleTableIDs = [
     "Prev Sale Date",
     ]
 valuationHistoryIDs = [
-    "Prev. Assess.",
-    "Prev. Apprais",
+    "Prev. Ass. Imp",
+    "Prev. Ass. Land",
+    "Prev. Ass. Tot",
+    "Prev. App. Imp",
+    "Prev. App. Land",
+    "Prev. App. Tot"
 ]
 '''
 Main Function
@@ -141,7 +145,7 @@ def main(argv=None):
         if not theArgs.debug:
             time.sleep (1+3*random.random()) # wait a few seconds before next query
 
-        url = "http://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(ids[0])
+        url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(ids[0])
 
         if theArgs.debug:
             print(url, file=fe)
@@ -208,11 +212,13 @@ def main(argv=None):
                 'id'] == "MainContent_grdHistoryValuesAsmt")
         rows = table.findAll(lambda tag: tag.name == 'tr')
         try:
-            vals = rows[1].contents
-            appr = vals[4].text
+            vals = rows[2].contents
+            ass_imp = vals[2].text
+            ass_land = vals[3].text
+            ass_tot = vals[4].text
         except:
             appr=""
-        output_string += appr + "\t"
+        output_string += ass_imp + "\t" + ass_land + "\t" + ass_tot + "\t"
 
         # Grab the most recent Appraisal from the Valuation History
         table = soup.find(
@@ -220,11 +226,13 @@ def main(argv=None):
                 'id'] == "MainContent_grdHistoryValuesAppr")
         rows = table.findAll(lambda tag: tag.name == 'tr')
         try:
-            vals = rows[1].contents
-            appr = vals[4].text
+            vals = rows[2].contents
+            appr_imp = vals[2].text
+            appr_land = vals[3].text
+            appr_tot = vals[4].text
         except:
             appr=""
-        output_string += appr + "\t"
+        output_string += appr_imp + "\t" + appr_land + "\t" + appr_tot + "\t"
 
         # Tack on a time stamp and row counter in separate columns
         output_string += current_time + "\t%d"%(recordCount)
