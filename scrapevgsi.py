@@ -60,7 +60,7 @@ class VisionIDFile:
 # IDs of DOM elements whose values should be plucked up and displayed
 domIDs =  [
     [ "MainContent_lblPid", "PID" ],
-    # [ "MainContent_lblGenOwner", "Owner"],
+    [ "MainContent_lblGenOwner", "Owner"],
     [ "MainContent_lblLocation", "Street Address" ],
     [ "MainContent_lblMblu",  "MBLU" ],
     [ "MainContent_lblBp", "Book&Page"],
@@ -72,12 +72,13 @@ domIDs =  [
     [ "MainContent_lblZone", "Zoning District" ],
     [ "MainContent_lblBldCount", "# Buildings" ],
    ]
-tableIDs = [
-    "Appr. Year",
-    "Improvements",
-    "Land",
-    "Total",
-]
+# Don't retrieve here - use the Appraisal/Assessment tables at bottom of page
+# tableIDs = [
+#     "Appr. Year",
+#     "Improvements",
+#     "Land",
+#     "Total",
+# ]
 saleDomIDs = [
     [ "MainContent_lblPrice", "Recent Sale Price", ],
     [ "MainContent_lblSaleDate", "Recent Sale Date" ]
@@ -89,9 +90,15 @@ saleTableIDs = [
     "Prev Sale Date",
     ]
 valuationHistoryIDs = [
+    "Curr. Ass. Imp",
+    "Curr. Ass. Land",
+    "Curr. Ass. Tot",
     "Prev. Ass. Imp",
     "Prev. Ass. Land",
     "Prev. Ass. Tot",
+    "Curr. App. Imp",
+    "Curr. App. Land",
+    "Curr. App. Tot",
     "Prev. App. Imp",
     "Prev. App. Land",
     "Prev. App. Tot"
@@ -127,8 +134,8 @@ def main(argv=None):
     output_string = ""
     for x in range(len(domIDs)):
         output_string += domIDs[x][1] + "\t"
-    for x in range(len(tableIDs)):
-        output_string += tableIDs[x] + "\t"
+    # for x in range(len(tableIDs)):
+    #     output_string += tableIDs[x] + "\t"
     for x in range(len(saleTableIDs)):
         output_string += saleTableIDs[x] + "\t"
     for x in range(len(valuationHistoryIDs)):
@@ -143,7 +150,7 @@ def main(argv=None):
             break
 
         if not theArgs.debug:
-            time.sleep (1+3*random.random()) # wait a few seconds before next query
+            time.sleep (1+5*random.random()) # wait a few seconds before next query
 
         url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s"%(ids[0])
 
@@ -174,13 +181,13 @@ def main(argv=None):
             result = soup.find(id=domIDs[x][0])
             output_string += result.text + "\t"
 
-        # Print the most recent appraisal date, Improvements, Land, and Total
-        table = soup.find(
-            lambda tag: tag.name == 'table' and tag.has_attr('id') and tag['id'] == "MainContent_grdCurrentValueAppr")
-        rows = table.findAll(lambda tag: tag.name == 'tr')
-        vals = rows[1].contents # contents of the row
-        for x in range(1,5):
-            output_string += vals[x].text + "\t"
+        # # Print the most recent appraisal date, Improvements, Land, and Total
+        # table = soup.find(
+        #     lambda tag: tag.name == 'table' and tag.has_attr('id') and tag['id'] == "MainContent_grdCurrentValueAppr")
+        # rows = table.findAll(lambda tag: tag.name == 'tr')
+        # vals = rows[1].contents # contents of the row
+        # for x in range(1,5):
+        #     output_string += vals[x].text + "\t"
 
         # Print the recent sale price and date
         for x in range(len(saleDomIDs)):
@@ -211,6 +218,16 @@ def main(argv=None):
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAsmt")
         rows = table.findAll(lambda tag: tag.name == 'tr')
+        # First get Current Assessed Improvements/Land/Total
+        try:
+            vals = rows[1].contents
+            ass_imp = vals[2].text
+            ass_land = vals[3].text
+            ass_tot = vals[4].text
+        except:
+            appr=""
+        output_string += ass_imp + "\t" + ass_land + "\t" + ass_tot + "\t"
+        # Then get Previous Assessed Improvements/Land/Total
         try:
             vals = rows[2].contents
             ass_imp = vals[2].text
@@ -225,6 +242,17 @@ def main(argv=None):
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAppr")
         rows = table.findAll(lambda tag: tag.name == 'tr')
+        # First get Current Appraised Improvements/Land/Total
+        try:
+            vals = rows[1].contents
+            appr_imp = vals[2].text
+            appr_land = vals[3].text
+            appr_tot = vals[4].text
+        except:
+            appr=""
+        output_string += appr_imp + "\t" + appr_land + "\t" + appr_tot + "\t"
+        
+        # Then get Previous Appraised Improvements/Land/Total
         try:
             vals = rows[2].contents
             appr_imp = vals[2].text
