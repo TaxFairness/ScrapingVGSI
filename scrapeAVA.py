@@ -47,30 +47,80 @@ def main(argv=None):
     xactions = soup.find_all("button", class_="font-semibold")
     # print(first_xaction.parent.parent.prettify())
     # print(list(xaction.parent.parent))
-    # xaction = xactions[7].parent.parent.parent
+    # xaction = xactions[7]
+    # print_xaction(xaction.parent.parent.parent)
+
     for xaction in xactions:
         print_xaction(xaction.parent.parent.parent)
 
 def print_xaction(x):
     entire_contents = x.contents
+    # print(repr(entire_contents))
+    cols = x.find_all(class_="w-1/4")
+    # print(len(cols))
     # print("Entire Transaction: ", len(entire))
     # print(len(entire_contents), " items in entire")
-    something = entire_contents[0].contents
+    transaction_line = print_firstcol(cols[0])
+    transaction_line += "\t" + print_partycol(cols[1])
+    transaction_line += "\t" + print_addnlcol(cols[2])
+    transaction_line += "\t" + print_finalcol(cols[3])
+    print(transaction_line)
+
+def print_firstcol(col):
+    firstcol = col.contents # return a list of the contents
     # print(len(something), " items in something")
-    summary=something[0].contents
+    # summary=firstcol[0].contents
     # print(len(summary), " items in summary")
     # print(summary)
-    transaction_line = summary[2].text
+    line = firstcol[2].text
     # print("ID: ",summary[2].text)
-    for child in summary[4]:
+    for child in firstcol[4]:
         # print("Type: ",type(child))
         if type(child) == bs4.element.Tag:
             t = child.text
             if t == "":
                 t = "-"
-            transaction_line += "\t" + t
+            line += "\t" + t
             # print(child.text)
-    print(transaction_line)
+    return line
+
+def print_partycol(col):
+    # Print Parties
+    # print("==========")
+    # print(repr(cols[1]))
+
+    partycol = col # return a list of the contents
+    # print("Parties: ",partycol)
+    parties = partycol.find_all("label")
+    # print(len(partycol))
+    partynames = [ "", "", ""]
+    inparty = 0
+    line = ""
+    for party in parties:
+        if party.text == "Party 1:":
+            inparty = 1
+        elif party.text == "Party 2:":
+            inparty = 2
+        elif party.text == "Parties":
+            inparty = inparty
+        else:
+            if partynames[inparty] != "":
+                partynames[inparty] = partynames[inparty] + ", "
+            partynames[inparty] = partynames[inparty] + party.text.strip()
+                # .replace(" ETA "," ")
+        # print(partynames)
+    line += partynames[1] + "\t" + partynames[2]
+    # print(line)
+    return line
+
+    # Print the "legal stuff"
+def print_addnlcol(col):
+    return "\t***** Additional *****"
+
+    # Print the "legal stuff"
+def print_finalcol(col):
+    return "\t***** Final Column *****"
+
     # print("--- and the repr() ---")
     # print(repr(x))
     # xid = x.find(class_="font-semibold")
