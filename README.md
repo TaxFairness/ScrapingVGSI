@@ -37,6 +37,11 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 
 The Grafton County Register of Deeds uses the AVA software
 to record deeds.
-
-The file **GraftonCounty-AVA-Export.html** contains a sort for
+The file **GraftonCounty-AVA-Export.html** contains a search for
 all transactions in Lyme, NH between 1 Apr 2019 and 1 Oct 2021.
+The `scrapingAVA.py` file sucks it in and produces a tab-delimited file that includes all the resords. 
+
+NB: The "PLAN" entries don't have a Book&Page entry, so the results
+for those rows are shifted one column to the left.
+I manually shifted the (three) rows over to produce the CSV file.
+Result file is **GCRoD Transactions-2019-2021.csv**

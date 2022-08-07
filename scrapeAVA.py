@@ -47,7 +47,16 @@ def main(argv=None):
     xactions = soup.find_all("button", class_="font-semibold")
     # print(first_xaction.parent.parent.prettify())
     # print(list(xaction.parent.parent))
-    # xaction = xactions[7]
+
+    headings = [ "ID", "Date", "Type", "-", "Book&Page", "Pages", "Party1", "Party2", "Legal", "Notes", "Return to", "Consideration", "Assoc. Docs"]
+    header = "\t".join(headings)
+    print(header)
+
+    # 7 (Isset) first test case
+    # 31 (Menard) has "Consideration"
+    # 33 (Santaw) has "additional documents"
+    # 35 (Rusch) has two additional documents
+    # xaction = xactions[35]
     # print_xaction(xaction.parent.parent.parent)
 
     for xaction in xactions:
@@ -62,7 +71,7 @@ def print_xaction(x):
     # print(len(entire_contents), " items in entire")
     transaction_line = print_firstcol(cols[0])
     transaction_line += "\t" + print_partycol(cols[1])
-    transaction_line += "\t" + print_addnlcol(cols[2])
+    transaction_line += "\t" + print_legalcol(cols[2])
     transaction_line += "\t" + print_finalcol(cols[3])
     print(transaction_line)
 
@@ -102,7 +111,7 @@ def print_partycol(col):
         elif party.text == "Party 2:":
             inparty = 2
         elif party.text == "Parties":
-            inparty = inparty
+            continue
         else:
             if partynames[inparty] != "":
                 partynames[inparty] = partynames[inparty] + ", "
@@ -114,12 +123,55 @@ def print_partycol(col):
     return line
 
     # Print the "legal stuff"
-def print_addnlcol(col):
-    return "\t***** Additional *****"
+def print_legalcol(col):
+    # print(repr(col))
+    return "Lyme"
 
-    # Print the "legal stuff"
+# Print the "final stuff"
+# Parse out:
+#   - Notes
+#   - Return to
+#   - Consideration
+#   - Associated Documents
+
 def print_finalcol(col):
-    return "\t***** Final Column *****"
+    # print("Final Column")
+    # print(repr(col))
+    final = col.find_all("label")
+    # print(len(final))
+    finalnames = ["-", "-", "-", "-", "-"]
+    whichname = 0
+    for item in final:
+        # print(item.text)
+        if item.text == "Notes:":
+            whichname = 1
+        elif item.text == "Return To:":
+            whichname = 2
+        elif item.text == "Consideration:":
+            whichname = 3
+        elif item.text == "Associated Documents":
+            whichname = 4
+        elif item.text == "Additional":
+            continue
+        else:
+            update_names(finalnames, whichname, item)
+    final = col.find_all("a")
+    for item in final:
+        # print(item.text)
+        update_names(finalnames, 4, item)
+    # print(finalnames)
+    line = finalnames[1] + "\t" + finalnames[2] + "\t" + finalnames[3] + "\t" + finalnames[4]
+    return line
+
+def update_names(finalnames, whichname, item):
+    if finalnames[whichname] == "-":
+        finalnames[whichname] = ""
+    if whichname == 2 and finalnames[2] != "":  # Just add lawyer's name, not address
+        return
+    if finalnames[whichname] != "":  # add ", " if something's there
+        finalnames[whichname] = finalnames[whichname] + ", "
+    finalnames[whichname] = finalnames[whichname] + item.text.strip()
+    # .replace(" ETA "," ")
 
     # print("--- and the repr() ---")
     # print(repr(x))
