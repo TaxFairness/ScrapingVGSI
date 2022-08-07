@@ -10,6 +10,8 @@ from the HTML file. Those IDs are contained in an array of text strings.
 
 import sys
 import argparse
+
+import bs4.element
 import requests
 from bs4 import BeautifulSoup
 import time
@@ -45,21 +47,30 @@ def main(argv=None):
     xactions = soup.find_all("button", class_="font-semibold")
     # print(first_xaction.parent.parent.prettify())
     # print(list(xaction.parent.parent))
-    xaction = xactions[7].parent.parent.parent
-    print_xaction(xaction)
+    # xaction = xactions[7].parent.parent.parent
+    for xaction in xactions:
+        print_xaction(xaction.parent.parent.parent)
 
 def print_xaction(x):
     entire_contents = x.contents
     # print("Entire Transaction: ", len(entire))
-    print(len(entire_contents), " items in entire")
+    # print(len(entire_contents), " items in entire")
     something = entire_contents[0].contents
-    print(len(something), " items in something")
+    # print(len(something), " items in something")
     summary=something[0].contents
-    print(len(summary), " items in summary")
-    print(summary)
-    for child in summary:
-        # print(repr(child))
-        print(child.text)
+    # print(len(summary), " items in summary")
+    # print(summary)
+    transaction_line = summary[2].text
+    # print("ID: ",summary[2].text)
+    for child in summary[4]:
+        # print("Type: ",type(child))
+        if type(child) == bs4.element.Tag:
+            t = child.text
+            if t == "":
+                t = "-"
+            transaction_line += "\t" + t
+            # print(child.text)
+    print(transaction_line)
     # print("--- and the repr() ---")
     # print(repr(x))
     # xid = x.find(class_="font-semibold")
