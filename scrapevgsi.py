@@ -160,7 +160,7 @@ def main(argv=None):
         try:
             page = requests.get(url)
         except:
-            output_string = "%s\tCan't reach the server"%(ids[0])
+            output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?"%(ids[0], ids[1], ids[2])
             print(output_string, file=fo)
             continue
 

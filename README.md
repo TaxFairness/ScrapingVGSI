@@ -33,3 +33,10 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 - Save as `<filename>.csv`
 
 
+# Scraping AVA
+
+The Grafton County Register of Deeds uses the AVA software
+to record deeds.
+
+The file **GraftonCounty-AVA-Export.html** contains a sort for
+all transactions in Lyme, NH between 1 Apr 2019 and 1 Oct 2021.
