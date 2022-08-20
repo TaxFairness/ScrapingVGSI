@@ -21,6 +21,9 @@ import random
 import re
 import os
 
+fi = None
+fo = None
+fe = None
 
 def main(argv=None):
     try:
@@ -37,12 +40,16 @@ def main(argv=None):
     except:
         return "Error parsing arguments"
 
+    global fi
     fi = theArgs.infile  # the argument parsing returns open file objects
+    global fo
     fo = theArgs.outfile
+    global fe
     fe = theArgs.errfile
 
     soup = BeautifulSoup(fi, 'html.parser')
-    print(soup.prettify(), file=fo)
+    # print the "prettified" file to stderr
+    print(soup.prettify(), file=fe)
 
     xactions = soup.find_all("button", class_="font-semibold")
     # print(first_xaction.parent.parent.prettify())
@@ -50,7 +57,7 @@ def main(argv=None):
 
     headings = [ "ID", "Date", "Type", "-", "Book&Page", "Pages", "Party1", "Party2", "Legal", "Notes", "Return to", "Consideration", "Assoc. Docs"]
     header = "\t".join(headings)
-    print(header)
+    print(header, file=fo)
 
     # 7 (Isset) first test case
     # 31 (Menard) has "Consideration"
@@ -73,17 +80,31 @@ def print_xaction(x):
     transaction_line += "\t" + print_partycol(cols[1])
     transaction_line += "\t" + print_legalcol(cols[2])
     transaction_line += "\t" + print_finalcol(cols[3])
-    print(transaction_line)
+    print(transaction_line,file=fo)
 
+'''
+Print the "first column" containing
+- Transaction ID (within button)
+- Date&Time (remainder are bs.Element.tag's)
+- Transaction Type
+- "-"
+- Book&Page
+- Page Count
+(It's really annoying to find the correct offsets - it seems to change 
+from day to day - or run to run? The "3" and "5" below are just magic for this run)
+'''
 def print_firstcol(col):
-    firstcol = col.contents # return a list of the contents
+    firstcolcontents = col.contents # return a list of the contents
     # print(len(something), " items in something")
     # summary=firstcol[0].contents
     # print(len(summary), " items in summary")
     # print(summary)
-    line = firstcol[2].text
+    # ct = len(firstcol)
+    # print(firstcol[ct-2])
+    # line = "Col1"
+    line = firstcolcontents[3].text  # Get the transactionID
     # print("ID: ",summary[2].text)
-    for child in firstcol[4]:
+    for child in firstcolcontents[5]:
         # print("Type: ",type(child))
         if type(child) == bs4.element.Tag:
             t = child.text

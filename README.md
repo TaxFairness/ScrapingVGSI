@@ -37,9 +37,25 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 
 The Grafton County Register of Deeds uses the AVA software
 to record deeds.
-The file **GraftonCounty-AVA-Export.html** contains a search for
-all transactions in Lyme, NH between 1 Apr 2019 and 1 Oct 2021.
-The `scrapingAVA.py` file sucks it in and produces a tab-delimited file that includes all the resords. 
+The search page at: https://ava.fidlar.com/NHGrafton/AvaWeb/#/searchresults
+seems only to return a max of 200 results.
+To collect information about a broad range of dates, it is necessary to 
+search across date ranges that produce fewer than 200 results.
+Begin the process at the final date of interest, then keep adjusting
+the beginning date to produce fewer than 200 results.
+
+Then use the Browser's "Inspect" facility to Copy the Outer HTML,
+and paste the information into a separte .html file representing
+that date range.
+
+The `scrapingAVA.py` file sucks in each of those files
+and produces a tab-delimited file that includes all the records. 
+
+The five files **GCRoD-1.html** .. **GCRoD-5.html** were retrieved 
+on 18Aug2022, each for a different date range to keep the record count
+under 200. 
+After processing by `scrapingAVA.py`, the tab-separated output is in
+**GCRoD-N.tsv**
 
 NB: The "PLAN" entries don't have a Book&Page entry, so the results
 for those rows are shifted one column to the left.
