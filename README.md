@@ -29,6 +29,7 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 - Open the .tsv file, let all fields be "General"
 - Look for "Can't reach the server" and fix those lines
 - Format the MBLU field into its component fields: Map, Lot, Unit
+- Format the Book&Page field into its components
 - Format all "$" values as numbers, no commas, zero decimal places
 - Format all dates as YYYY-DD-MM
 - Save as `<filename>.csv`
