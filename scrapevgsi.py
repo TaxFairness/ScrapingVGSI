@@ -141,6 +141,9 @@ def main(argv=None):
     for x in range(len(valuationHistoryIDs)):
         output_string += valuationHistoryIDs[x] + "\t"
     print(output_string, file=fo)
+    
+    from http.client import HTTPConnection
+    
 
     recordCount = 0
     while True:
@@ -158,8 +161,12 @@ def main(argv=None):
             print(url, file=fe)
 
         try:
-            page = requests.get(url)
-        except:
+            HTTPConnection.debuglevel = 0
+            requests.packages.urllib3.disable_warnings()
+            page = requests.get(url, verify=False)
+            from requests.exceptions import HTTPError
+        except HTTPError as e:
+            print(e.response.text)
             output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?"%(ids[0], ids[1], ids[2])
             print(output_string, file=fo)
             continue

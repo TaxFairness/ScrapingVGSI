@@ -35,9 +35,14 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 
 #### Enumerating PIDs
 
-It may be possible to enumerate all PIDs from the Vision system
+~~It may be possible to enumerate all PIDs from the Vision system
 instead of relying on a (potentially-incomplete) hand-entered list.
-Do a search by Map, then iterate across all the pages of the result until a 500 Server error returns.
+Do a search by Map, then iterate across all the pages of the result until a 500 Server error returns.~~
+
+_NOPE. The Vision software continually varies the "txtM" and "hdnM"
+fields of the POST post that make it hard to automate.
+It's easier to copy/paste the lines from all the individual web pages
+from each of the ~20 maps._
 
 The URL below requests map 408, page 4 as a table.
 The final field of each row is the PID.

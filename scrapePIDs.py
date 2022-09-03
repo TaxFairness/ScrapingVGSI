@@ -45,6 +45,13 @@ mapNumbers = [
 
 # cookie = { "ASP.NET_SessionId": "cqggbvj4c4w4fogikruiyook" }
 
+# THIS EFFORT IS (mostly) DOOMED.
+# VISION CHANGES __VIEWSTATE between requests
+# This makes it hard to enumerate the pages algorithmically
+# Dang.
+#
+# Just click through the maps (201, 401..422) and copy/paste the results
+
 reqParams = {
 	"__EVENTTARGET": "ctl00$MainContent$grdSearchResults",
 	"__EVENTARGUMENT": "Page$1",
@@ -86,17 +93,6 @@ import sys
 import argparse
 import requests
 from requests.exceptions import HTTPError
-from requests.structures import CaseInsensitiveDict
-# import pycurl
-# import certifi
-# from io import BytesIO
-# try:
-# 	python 3
-	# from urllib.parse import urlencode
-# except ImportError:
-# 	python 2
-	# from urllib import urlencode
-
 
 import urllib3
 # from urllib.parse import urlencode
@@ -108,7 +104,39 @@ import random
 import re
 import os
 
+'''
+getMapPage(mapnum, pagenum)
+Make a MBLU request to Vision for data about map
+Request the subpage (at the bottom)
+Return the page's text if it exists
+Return "" if the request generates a 500 error (that means no such page)
+'''
+def getMapPage(mapnum, pagenum):
+	url = "https://gis.vgsi.com/lymeNH/Search.aspx"
+	urllib3.disable_warnings()
+	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+	from http.client import HTTPConnection
+	HTTPConnection.debuglevel = 0
+	
+	try:
+		# Update the important properties in reqParams
+		reqParams["__EVENTARGUMENT"] = "Page$%s"%pagenum
+		reqParams["ctl00$MainContent$txtM"] = "%s"%mapnum
+		reqParams["ctl00$MainContent$hdnM"] = "%s"%mapnum
 
+		# print (reqParams)
+		urldata = urllib.parse.urlencode(reqParams)
+		print(urldata)
+		# cookies=cookie
+		page = requests.post(url, verify=False, headers=headers, data=urldata)
+	except HTTPError as e:
+		output_string = "Can't reach the server %s?" % (e.response.text)
+		print(output_string)
+	else:
+		if (page.status_code == 200):
+			return page.text
+		return ""  # we must have received a 500 error
+	
 '''
 Main Function
 
@@ -134,57 +162,17 @@ def main(argv=None):
 	fo = theArgs.outfile
 	fe = theArgs.errfile
 
-	# for i in range(len(mapNumbers)):
-	#     print(i, mapNumbers[i], file=fo)
+	for mapnum in range(len(mapNumbers)):
+		pagenum = 1
+		while True:
+			thePage=getMapPage(mapNumbers[mapnum],pagenum)
+			if(len(thePage) == 0):
+				break
+			print(mapNumbers[mapnum], pagenum, len(thePage))
+			pagenum+= 1
 
 
-	# c.setopt(c.URL, 'https://httpbin.org/post')
-	# post_data = {'field': 'value'}
-	# # Form data must be provided already urlencoded.
-	# postfields = urlencode(post_data)
-	# # Sets request method to POST,
-	# # Content-Type header to application/x-www-form-urlencoded
-	# # and data to send in request body.
-	# c.setopt(c.POSTFIELDS, postfields)
-	#
-	# c.perform()
-	# c.close()
 
-
-	url = "https://gis.vgsi.com/lymeNH/Search.aspx"
-	# buffer = BytesIO()
-	# c = pycurl.Curl()
-	# c.setopt(c.URL, url)
-	# postfields = urlencode(reqParams)
-	# c.setopt(c.POSTFIELDS, postfields)
-	# c.setopt(c.WRITEDATA, buffer)
-	# c.perform()
-	#
-	# # HTTP response code, e.g. 200.
-	# print('Status: %d' % c.getinfo(c.RESPONSE_CODE))
-	# # Elapsed time for the transfer.
-	# print('Time: %f' % c.getinfo(c.TOTAL_TIME))
-	#
-	# # getinfo must be called before close.
-	# c.close()
-
-	urllib3.disable_warnings()
-	# headers = CaseInsensitiveDict()
-	# headers["Content-Type"] = "application/json"
-	headers = {"Content-Type": "application/x-www-form-urlencoded"}
-	from http.client import HTTPConnection  # py3
-	HTTPConnection.debuglevel = 1
-	
-	try:
-		# cookies=cookie
-		urldata = urllib.parse.urlencode(reqParams)
-		page = requests.post(url, verify=False, headers=headers , data=urldata)
-	except HTTPError as e:
-		output_string = "Can't reach the server %s?"%(e.response.text)
-		print(output_string)
-	else:
-		print(page.status_code)
-		print(page.text, file=fo)
 
 if __name__ == "__main__":
 	sys.exit(main())
