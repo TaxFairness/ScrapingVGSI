@@ -1,0 +1,15 @@
+# Source: David Robbins, Lyme Planning and Zoning - 6Apr2021,,
+# Mapping between Vision ID and the tax map/lot number,,
+# VisionID,TaxMap,Lot
+71,201,50
+34,201,27
+123,201,86
+125,201,88
+137,201,94.2
+575,405,35
+# This is a comment, and should be skipped, even in the middle of the list
+103178,410,13.1200
+83,1,1
+5,1,1
+115,1,1
+442,1,1

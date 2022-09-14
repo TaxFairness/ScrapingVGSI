@@ -61,7 +61,8 @@ curl -vv -X POST https://gis.vgsi.com/lymeNH/Search.aspx -d "__EVENTTARGET=&__EV
 
 The Grafton County Register of Deeds uses the AVA software
 to record deeds.
-The search page at: https://ava.fidlar.com/NHGrafton/AvaWeb/#/searchresults
+The search page at: 
+[https://ava.fidlar.com/NHGrafton/AvaWeb/#/searchresults](https://ava.fidlar.com/NHGrafton/AvaWeb/#/searchresults)
 seems only to return a max of 200 results.
 To collect information about a broad range of dates, it is necessary to 
 search across date ranges that produce fewer than 200 results.
@@ -83,5 +84,5 @@ After processing by `scrapingAVA.py`, the tab-separated output is in
 
 NB: The "PLAN" entries don't have a Book&Page entry, so the results
 for those rows are shifted one column to the left.
-I manually shifted the (three) rows over to produce the CSV file.
+I manually shifted the (three) entries to the right to produce the CSV file.
 Result file is **GCRoD Transactions-2019-2021.csv**
