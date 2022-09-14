@@ -102,9 +102,9 @@ def print_firstcol(col):
     # ct = len(firstcol)
     # print(firstcol[ct-2])
     # line = "Col1"
-    line = firstcolcontents[3].text  # Get the transactionID
+    line = firstcolcontents[-2].text  # Get the transactionID (second to last?)
     # print("ID: ",summary[2].text)
-    for child in firstcolcontents[5]:
+    for child in firstcolcontents[-1]: # Get the last element (?)
         # print("Type: ",type(child))
         if type(child) == bs4.element.Tag:
             t = child.text
