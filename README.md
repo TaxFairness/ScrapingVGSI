@@ -19,9 +19,18 @@ python ./scrapevgsi.py -d -o TODAYS-DATE.tsv -i ./taxcardlookup-short.txt
 
 There's a `-d` debug option that eliminates the delay between requests for faster testing.
 
-**21Nov2021**
-Remove lines from original DAR file that are not in town's database
-(as shown in the OldVsNew PDF from Oct 2021)
+## Manual Processing
+
+After the full set of records has been scraped into a `.tsv` file, the following manipulations are necessary:
+
+* Split Map/Lot/Unit into separate columns (use "/" & " " as delimiters)
+* If necessary, combine (actual) Unit into the "Block-unit" column
+* Split Book/Page into separate columns, remove leading zero's
+* Convert all $###,### columns to simple integer
+
+## Updates
+**11Dec2022** Retrieved full set of PIDs using procedure below.
+Ran `scrapevgsi.py` without incident to produce `ScrapedData5.csv`
 
 **24Feb2022**
 To convert the "scraped data" `.tsv` output file into a form suitable for input to SQLite, do the following:
@@ -34,7 +43,52 @@ To convert the "scraped data" `.tsv` output file into a form suitable for input 
 - Format all dates as YYYY-DD-MM
 - Save as `<filename>.csv`
 
+**21Nov2021**
+Remove lines from original DAR file that are not in town's database
+(as shown in the OldVsNew PDF from Oct 2021)
+
 #### Enumerating PIDs
+
+**Here's the process for Enumerating PIDs. It takes ~20 minutes** 
+
+* Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
+* Enter each of the map numbers
+* Click through each of that map's pages
+* Copy each of those pages. Start to the left of **Address** 
+and drag across the last row.
+Do _not_ copy the page numbers - they screw up the columns of the .xlsx
+* Paste into a spreadsheet
+* For extra credit, add a "page number" to track each map's Page
+* Save the full results as a "Raw Data" page, and protect that sheet
+* Make a copy and then manipulate into a CSV file with PID, Map, Lot
+* _That's it..._
+
+```
+201 ... then skip to...
+401 ... the rest are in sequence...
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+
+```
 
 ~~It may be possible to enumerate all PIDs from the Vision system
 instead of relying on a (potentially-incomplete) hand-entered list.
@@ -43,7 +97,7 @@ Do a search by Map, then iterate across all the pages of the result until a 500 
 _NOPE. The Vision software continually varies the "txtM" and "hdnM"
 fields of the POST post that make it hard to automate.
 It's easier to copy/paste the lines from all the individual web pages
-from each of the ~20 maps._
+from each of the ~20 maps. See the procedure above._
 
 The URL below requests map 408, page 4 as a table.
 The final field of each row is the PID.

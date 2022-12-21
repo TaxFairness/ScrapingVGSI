@@ -1,6 +1,13 @@
 '''
 Scrape VGSI PID Numbers
 
+# THIS EFFORT IS (mostly) DOOMED.
+# VISION CHANGES __VIEWSTATE between requests
+# This makes it hard to enumerate the pages algorithmically
+# Dang.
+#
+# Just click through the maps (201, 401..422) and copy/paste the results
+
 Retrieve a list of PIDs from the Vision property database for Lyme, NH.
 Request pages for each of the Tax Maps, iterating through all the result
 pages until a 500 error indicates that there are no more pages for that map.
@@ -44,13 +51,6 @@ mapNumbers = [
  ]
 
 # cookie = { "ASP.NET_SessionId": "cqggbvj4c4w4fogikruiyook" }
-
-# THIS EFFORT IS (mostly) DOOMED.
-# VISION CHANGES __VIEWSTATE between requests
-# This makes it hard to enumerate the pages algorithmically
-# Dang.
-#
-# Just click through the maps (201, 401..422) and copy/paste the results
 
 reqParams = {
 	"__EVENTTARGET": "ctl00$MainContent$grdSearchResults",
