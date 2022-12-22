@@ -2,7 +2,8 @@
 
 Back in 2017, I wrote a bunch of scripts to pull data out of the Vision property record (VGSI) for Lyme, NH
 
-In April 2021, David Robbins sent me a CSV file (txcardlookup-6Apr2021) that listed all properties by their VGSI "PID" along with Map/Lot
+In April 2021, the Town of Lyme sent me a CSV file (txcardlookup-6Apr2021)
+that listed all properties by their VGSI "PID" along with Map/Lot
 (See note below about enumerating the PIDs.)
 
 The `scrapevgsi.py` script retrieves PIDs ("VisionID"s) from a file, and outputs a tab-separated file that shows selected fields from the resulting page.
@@ -14,37 +15,30 @@ To run the script, using the default file of PIDs, and outputting to a file name
 cd ScrapingVGSI
 python ./scrapevgsi.py -i ./taxcardlookup-21Nov2021.txt -o TODAYS-DATE.tsv 
 # or to debug...
-python ./scrapevgsi.py -d -o TODAYS-DATE.tsv -i ./taxcardlookup-short.txt 
+python ./scrapevgsi.py -d -i ./taxcardlookup-short.txt -o TODAYS-DATE.tsv 
 ```
 
-There's a `-d` debug option that eliminates the delay between requests for faster testing.
+The `-d` debug option eliminates the delay between requests for faster testing.
 
-## Manual Processing
+## Manual Processing after Scraping
 
-After the full set of records has been scraped into a `.tsv` file, the following manipulations are necessary:
+After the full set of records has been scraped into a `.tsv` file,
+convert the "scraped data" file into a form suitable for input to SQLite by doing the following:
 
-* Split Map/Lot/Unit into separate columns (use "/" & " " as delimiters)
-* If necessary, combine (actual) Unit into the "Block-unit" column
-* Split Book/Page into separate columns, remove leading zero's
-* Convert all $###,### columns to simple integer
+- Open the .tsv file, let all fields be "General"
+- Look for any "Can't reach the server" and fix those lines
+- Format the MBLU field into its component fields: Map, Lot, Unit using Excel "Text to Columns" to split on "/" and " ". Remove leading zeroes.
+- Format the Book&Page field into its components. Remove leading zeroes.
+- Format all "\$" values as numbers, no `$`, no commas, zero decimal places
+- Format all dates as YYYY-DD-MM
+- Save as `<filename>.csv`
 
 ## Updates
 **11Dec2022** Retrieved full set of PIDs using procedure below.
 Ran `scrapevgsi.py` without incident to produce `ScrapedData5.csv`
 
-**24Feb2022**
-To convert the "scraped data" `.tsv` output file into a form suitable for input to SQLite, do the following:
-
-- Open the .tsv file, let all fields be "General"
-- Look for "Can't reach the server" and fix those lines
-- Format the MBLU field into its component fields: Map, Lot, Unit
-- Format the Book&Page field into its components
-- Format all "$" values as numbers, no commas, zero decimal places
-- Format all dates as YYYY-DD-MM
-- Save as `<filename>.csv`
-
 **21Nov2021**
-Remove lines from original DAR file that are not in town's database
+Remove lines from original Town file that are not in town's database
 (as shown in the OldVsNew PDF from Oct 2021)
 
 #### Enumerating PIDs
@@ -92,7 +86,8 @@ Do _not_ copy the page numbers - they screw up the columns of the .xlsx
 
 ~~It may be possible to enumerate all PIDs from the Vision system
 instead of relying on a (potentially-incomplete) hand-entered list.
-Do a search by Map, then iterate across all the pages of the result until a 500 Server error returns.~~
+The algorithm could do a search by Map, then iterate
+across all the pages of the result until a 500 Server error returns.~~
 
 _NOPE. The Vision software continually varies the "txtM" and "hdnM"
 fields of the POST post that make it hard to automate.
