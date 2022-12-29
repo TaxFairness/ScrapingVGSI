@@ -131,6 +131,21 @@ under 200.
 After processing by `scrapingAVA.py`, the tab-separated output is in
 **GCRoD-N.tsv**
 
+## Processing the `.tsv` files
+
+* Open it, and save as `.xlsx` file for ease of formatting
+* Split the Date&Time column on the " " character.
+It'll flow into three column: Date, Time, AM/PM.
+Discard the AM/PM column.
+* Split the Book&Page Column into two
+* Check all the `PLAN` entries and fix according to the steps below
+* Discard the `-` column between Type and Book&Page
+* Convert all dates to YYYY-MM-DD
+* Convert all prices to numeric, no decimals, no commas, no "$"
+* Create a new tab in the Tax Fairness/Raw Data/GCRoD-All-Data file
+* Append the new data to the "All Data" tab
+* Export as a `.csv` file and import into SQLite
+
 NB: The "PLAN" entries don't have a Book&Page entry, so the results
 for those rows are shifted one column to the left.
 I manually shifted the (three) entries to the right to produce the CSV file.
