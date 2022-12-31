@@ -129,22 +129,21 @@ handleOwnershipHistory
 Return a string containing a set of lines that represent the Ownership History.
 Includes: Owner, Sale Price, Certificate, Book&Page, Instrument, Sale Date
 '''
+
 def handleOwnershipHistory(theSoup, pid):
     historyTable = theSoup.find(id=ownershipHistoryID)
     htRows = historyTable.find_all('tr')
     outputStr = ""
     for row in htRows:
         cells = row.findChildren('td')
-        cellCols = []
         for cell in cells:
             if cell != []:
-                cellCols.append(cell.string)
-        if len(cellCols) == 5:
-            cellCols.insert(4,"-")
-        if len(cellCols) != 0:
-            outputStr += "\t".join(cellCols) + "\t" + pid + "\n"
+                outputStr += cell.string + "\t"
+        outputStr += pid + "\n"
     return outputStr
 
+# py_table = soup.find ('table', {'class':'wikitable'}).tbody
+# py_rows = py_table.find_all ('tr')
 '''
 Main Function
 
@@ -173,58 +172,61 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fo = theArgs.outfile
     fe = theArgs.errfile
-    fh = open("OwnershipHistory.tsv", "wt") # Ownership History
     
     infile = VisionIDFile(fi)
     
-    # Print the heading row, with all the column names
-    output_string = displayHeading()
-    print(output_string, file=fo)
-    print("Owner\tSale Price\tCertificate\tBook&Page\tInstrument\tSale Date\tPID\n",file=fh)
+    # Display heading for the file
+    str = displayHeading()
+    print(str, file=fo)
     
     from http.client import HTTPConnection
-    
+
     recordCount = 0
-    while True:
+    while recordCount == 0:
         recordCount += 1
-        ids = infile.readNextVisionID()
-        if ids == []:  # EOF
-            break
+        # ids = infile.readNextVisionID()
+        # if ids == []:  # EOF
+        #     break
+        #
+        # if not theArgs.debug:
+        #     time.sleep(
+        #         1 + 5 * random.random())  # wait a few seconds before next query
+        #
+        # url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % (ids[0])
+        #
+        # if theArgs.debug:
+        #     print(url, file=fe)
+        #
+        # try:
+        #     HTTPConnection.debuglevel = 0
+        #     requests.packages.urllib3.disable_warnings()
+        #     page = requests.get(url, verify=False)
+        #     from requests.exceptions import HTTPError
+        # except HTTPError as e:
+        #     print(e.response.text)
+        #     output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
+        #         ids[0], ids[1], ids[2])
+        #     print(output_string, file=fo)
+        #     continue
+        #
+        # inStr = page.text
+        # if inStr.find(
+        #         'There was an error loading the parcel') >= 0:  # string present
+        #     output_string = \
+        #         "%s\tProblem loading parcel PID %s, Map %s Lot %s" % (
+        #         ids[0], ids[0], ids[1], ids[2])
+        #     print(output_string, file=fo)
+        #     continue
         
-        if not theArgs.debug:
-            time.sleep(
-                10 + 5 * random.random())  # wait a few seconds before next query
-        
-        url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % (ids[0])
-        
-        if theArgs.debug:
-            print(url, file=fe)
-        
-        try:
-            HTTPConnection.debuglevel = 0
-            requests.packages.urllib3.disable_warnings()
-            page = requests.get(url, verify=False)
-            from requests.exceptions import HTTPError
-        except HTTPError as e:
-            print(e.response.text)
-            output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
-                ids[0], ids[1], ids[2])
-            print(output_string, file=fo)
-            continue
-        
-        inStr = page.text
-        if inStr.find(
-                'There was an error loading the parcel') >= 0:  # string present
-            output_string = \
-                "%s\tProblem loading parcel PID %s, Map %s Lot %s" % (
-                ids[0], ids[0], ids[1], ids[2])
-            print(output_string, file=fo)
-            continue
-        
-        soup = BeautifulSoup(page.content, "html.parser")
+        page = fi.read()
+        soup = BeautifulSoup(page, "html.parser")
         
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
+        
+        someID = "123"
+        # parse out the ownership history, with dates, book/page, names, etc.
+        historyResult = handleOwnershipHistory(soup, someID)
         
         # First print the random fields from the page
         output_string = ""
@@ -325,9 +327,6 @@ def main(argv=None):
         print(output_string, file=fo)
         print(output_string)
 
-        # and output the recent ownership history into a separate file
-        histStr = handleOwnershipHistory(soup, ids[0])
-        print(histStr, file=fh)
 
 if __name__ == "__main__":
     sys.exit(main())
