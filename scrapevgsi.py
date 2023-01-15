@@ -160,8 +160,8 @@ def main(argv=None):
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument("-i", '--infile', nargs='?',
                             type=argparse.FileType('rU'), default=sys.stdin)
-        parser.add_argument("-o", '--outfile', nargs='?',
-                            type=argparse.FileType('w'), default=sys.stdout)
+        # parser.add_argument("-o", '--outfile', nargs='?',
+        #                     type=argparse.FileType('w'), default=sys.stdout)
         parser.add_argument("-e", '--errfile', nargs='?',
                             type=argparse.FileType('w'), default=sys.stderr)
         parser.add_argument('-d', '--debug', action="store_true",
@@ -169,11 +169,15 @@ def main(argv=None):
         theArgs = parser.parse_args()
     except:
         return "Error parsing arguments"
+
+    output_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
+    # print(output_date)
     fi = theArgs.infile  # the argument parsing returns open file objects
-    fo = theArgs.outfile
     fe = theArgs.errfile
-    fh = open("OwnershipHistory.tsv", "wt") # Ownership History
+    # fo = theArgs.outfile
+    fo = open("ScrapedData_%s.tsv"%output_date, "wt")
+    fh = open("OwnershipHistory_%s.tsv"%output_date, "wt") # Ownership History
     
     infile = VisionIDFile(fi)
     

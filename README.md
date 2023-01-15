@@ -125,28 +125,40 @@ that date range.
 The `scrapingAVA.py` file sucks in each of those files
 and produces a tab-delimited file that includes all the records. 
 
-The five files **GCRoD-1.html** .. **GCRoD-5.html** were retrieved 
-on 18Aug2022, each for a different date range to keep the record count
-under 200. 
-After processing by `scrapingAVA.py`, the tab-separated output is in
-**GCRoD-N.tsv**
+For extra credit, go through each line 
 
 ## Processing the `.tsv` files
 
 * Open it, and save as `.xlsx` file for ease of formatting
-* Split the Date&Time column on the " " character.
+* If needed, split the Date&Time column on the " " character.
 It'll flow into three column: Date, Time, AM/PM.
 Discard the AM/PM column.
-* Split the Book&Page Column into two
+* If needed, split the Book&Page Column into two new columns
 * Check all the `PLAN` entries and fix according to the steps below
 * Discard the `-` column between Type and Book&Page
+* Extra credit: Examine `DEED`s and record transfer tax (see below).
 * Convert all dates to YYYY-MM-DD
 * Convert all prices to numeric, no decimals, no commas, no "$"
-* Create a new tab in the Tax Fairness/Raw Data/GCRoD-All-Data file
-* Append the new data to the "All Data" tab
+* Create a new tab in the 
+`Tax Fairness/Raw Data/GCRoD-All-Data **.XLSX** file`
+and paste in this data
+* Append the new data to the "All Data" tab 
 * Export as a `.csv` file and import into SQLite
 
-NB: The "PLAN" entries don't have a Book&Page entry, so the results
+**Fixing "PLAN" entries:** These don't have a Book&Page entry, so the results
 for those rows are shifted one column to the left.
-I manually shifted the (three) entries to the right to produce the CSV file.
-Result file is **GCRoD Transactions-2019-2021.csv**
+You must manually shift the entries to the right to produce the CSV file.
+
+**Transfer Tax:** Examine each `DEED`.
+Record its Transfer Tax by looking at the actual deed. 
+If there's a Transfer Tax, record it in the rightmost column,
+otherwise enter '-' to indicate that someone has checked it.
+There's (almost) always a $25 LCHIP entry; ignore it.
+
+### Notes on imports
+
+* The five files **GCRoD-1.html** .. **GCRoD-5.html** were retrieved 
+on 18Aug2022, each for a different date range to keep the record count
+under 200. 
+After processing by `scrapingAVA.py`, the tab-separated output is in
+**GCRoD-N.tsv**
