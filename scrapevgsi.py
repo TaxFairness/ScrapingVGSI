@@ -114,18 +114,18 @@ def displayHeading():
     # Print the heading row, with all the column names
     output_string = ""
     for x in range(len(domIDs)):
-        output_string += domIDs[x][1] + "\t"
-        if domIDs[x][1] == "MBLU":
+        output_string += "%s\t" % domIDs[x][1]
+        if domIDs[x][1] == "MBLU":  # add column headings for expanded MBLU
             output_string += "Map\tLot\tUnit\tSub\t"
-        if domIDs[x][1] == "Book&Page":
+        if domIDs[x][1] == "Book&Page": # add column headings for Book & Page
             output_string += "Book\tPage\t"
     # for x in range(len(tableIDs)):
     #     output_string += tableIDs[x] + "\t"
     for x in range(len(saleTableIDs)):
-        output_string += saleTableIDs[x] + "\t"
+        output_string += "%s\t" % saleTableIDs[x]
     for x in range(len(valuationHistoryIDs)):
-        output_string += valuationHistoryIDs[x] + "\t"
-    output_string += "Time\tRecord#\tCollectedOn"
+        output_string += "%s\t" % valuationHistoryIDs[x]
+    output_string += "CollectedOn\tRecord#"
     return output_string
 
 '''
@@ -138,16 +138,18 @@ def handleOwnershipHistory(theSoup, pid):
     historyTable = theSoup.find(id=ownershipHistoryID)
     htRows = historyTable.find_all('tr')
     outputStr = ""
-    for row in htRows:
-        cells = row.findChildren('td')
+    for row in htRows:                          # for each row of the history table
+        cells = row.findChildren('td')          # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell != []:
                 cellCols.append(cell.string)
-        if len(cellCols) == 5:
-            cellCols.insert(4,"-")
+        if len(cellCols) == 5:                  # add in "-" for Instrument if it's missing
+            cellCols.insert(4,"-")              # (sometimes it is)
         if len(cellCols) != 0:
-            outputStr += "\t".join(cellCols) + "\t" + pid + "\n"
+            cellCols.append(pid)                # put pid on the end
+            outputStr += "\t".join(cellCols)    # output all the columns
+            outputStr += "\n"                   # and a newline
     return outputStr
 
 '''
@@ -233,20 +235,19 @@ def main(argv=None):
         soup = BeautifulSoup(page.content, "html.parser")
         
         now = datetime.now()
-        current_time = now.strftime("%H:%M:%S")
-        current_date = now.strftime("%Y-%m-%d")
+        current_time = now.strftime("%Y-%m-%d %H:%M:%S")
         
         # First print the random fields from the page
         output_string = ""
         for x in range(len(domIDs)):
             result = soup.find(id=domIDs[x][0])
-            output_string += result.text + "\t"
+            output_string += "%s\t" % result.text
             if domIDs[x][0] == "MainContent_lblBp": # also split Book&Page
                 ary = result.text.split("/")
-                output_string += ary[0] + "\t" + ary[1] + "\t"
+                output_string += "%s\t%s\t" % (ary[0], ary[1])
             if domIDs[x][0] == "MainContent_lblMblu":  # also split MBLU
                 ary = result.text.split("/")
-                output_string += ary[0].strip() + "\t" + ary[1].strip() + "\t" + ary[2].strip() + "\t" + ary[3].strip() + "\t"
+                output_string += "%s\t%s\t%s\t%s\t" % (ary[0].strip(), ary[1].strip(), ary[2].strip(), ary[3].strip())
 
         # # Print the most recent appraisal date, Improvements, Land, and Total
         # table = soup.find(
@@ -259,7 +260,7 @@ def main(argv=None):
         # Print the recent sale price and date
         for x in range(len(saleDomIDs)):
             result = soup.find(id=saleDomIDs[x][0])
-            output_string += result.text + "\t"
+            output_string += "%s\t" % result.text
         
         # Print the most recent non-zero sale price and date
         # handle case where there isn't a value for either - just insert ""
@@ -275,7 +276,7 @@ def main(argv=None):
                 2].text == recentSale:  # no new info
                 continue
             dateIx = len(vals) - 2  # sometimes five columns, sometimes 6 :-(
-            prevSalesStr += vals[2].text + "\t" + vals[dateIx].text + "\t"
+            prevSalesStr += "%s\t%s\t" % (vals[2].text, vals[dateIx].text)
             break
         if prevSalesStr == "":
             prevSalesStr = "\t\t"
@@ -297,7 +298,7 @@ def main(argv=None):
             ass_tot = vals[4].text
         except:
             appr = ""
-        output_string += ass_imp + "\t" + ass_land + "\t" + ass_tot + "\t"
+        output_string += "%s\t%s\t%s\t" % (ass_imp, ass_land, ass_tot)
         # Then get Previous Assessed Improvements/Land/Total
         try:
             vals = rows[2].contents
@@ -306,7 +307,7 @@ def main(argv=None):
             ass_tot = vals[4].text
         except:
             appr = ""
-        output_string += ass_imp + "\t" + ass_land + "\t" + ass_tot + "\t"
+        output_string += "%s\t%s\t%s\t" % (ass_imp, ass_land, ass_tot)
         
         # Grab the most recent Appraisal from the Valuation History
         table = soup.find(
@@ -324,7 +325,7 @@ def main(argv=None):
             appr_tot = vals[4].text
         except:
             appr = ""
-        output_string += appr_imp + "\t" + appr_land + "\t" + appr_tot + "\t"
+        output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
         
         # Then get Previous Appraised Improvements/Land/Total
         try:
@@ -334,11 +335,10 @@ def main(argv=None):
             appr_tot = vals[4].text
         except:
             appr = ""
-        output_string += appr_imp + "\t" + appr_land + "\t" + appr_tot + "\t"
+        output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
         
-        # Tack on time stamp, row counter, current_date in separate columns
-        
-        output_string += "%s\t%d\t%s" % (current_time, recordCount, current_date)
+        # Tack on time stamp, row counter in separate columns
+        output_string += "%s\t%d" % (current_time, recordCount)
         print(output_string, file=fo)
         print(output_string)
 
