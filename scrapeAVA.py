@@ -5,82 +5,97 @@ Input is a HTML file that contains a list of records.
 
 Output is a TSV file that contains the fields selected  using the #id fields
 from the HTML file. Those IDs are contained in an array of text strings.
-
 '''
 
 import sys
 import argparse
 
 import bs4.element
-import requests
+# import requests
 from bs4 import BeautifulSoup
-import time
-from datetime import datetime
-import random
 
-import re
-import os
+# import time
+from datetime import datetime
+
+# import random
+#
+# import re
+# import os
 
 fi = None
 fo = None
 fe = None
 
+
 def main(argv=None):
-    try:
-        parser = argparse.ArgumentParser(description=__doc__)
-        parser.add_argument("-i", '--infile', nargs='?',
-                            type=argparse.FileType('rU'), default=sys.stdin)
-        parser.add_argument("-o", '--outfile', nargs='?',
-                            type=argparse.FileType('w'), default=sys.stdout)
-        parser.add_argument("-e", '--errfile', nargs='?',
-                            type=argparse.FileType('w'), default=sys.stderr)
-        parser.add_argument('-d', '--debug', action="store_true",
-                            help="Enable the debug mode.")
-        theArgs = parser.parse_args()
-    except:
-        return "Error parsing arguments"
+	try:
+		parser = argparse.ArgumentParser(description=__doc__)
+		parser.add_argument("-i", '--infile', nargs='?',
+							type=argparse.FileType('rU'), default=sys.stdin)
+		# parser.add_argument("-o", '--outfile', nargs='?',
+		# 					type=argparse.FileType('w'), default=sys.stdout)
+		parser.add_argument("-e", '--errfile', nargs='?',
+							type=argparse.FileType('w'), default=sys.stderr)
+		parser.add_argument('-d', '--debug', action="store_true",
+							help="Enable the debug mode.")
+		theArgs = parser.parse_args()
+	except:
+		return "Error parsing arguments"
+	
+	output_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+	
+	global fi
+	fi = theArgs.infile  # the argument parsing returns open file objects
+	global fo
+	# fo = theArgs.outfile
+	fo = open("AVA_Records_%s.tsv" % output_date, "wt")
+	global fe
+	fe = theArgs.errfile
+	
+	soup = BeautifulSoup(fi, 'html.parser')
+	# print the "prettified" file to stderr
+	print(soup.prettify(), file=fe)
+	
+	xactions = soup.find_all("button", class_="font-semibold")
+	# print(first_xaction.parent.parent.prettify())
+	# print(list(xaction.parent.parent))
+	
+	# NB: GCRoD does not display Transfer Tax as a scrapable value.
+	# Add in manually, and use "-" for values where no transfer tax recorded
+	# Ignore LCHIP tax - it's the same on virtually all properties
+	headings = ["ID", "Date&Time", "Date", "Time", "Type", "Don't_Keep", "Book&Page",
+				"Book", "Page", "Pages", "Party1",
+				"Party2", "Legal", "Notes", "Return to", "Consideration",
+				"Assoc. Docs", "Transfer Tax", "CollectedOn"]
+	header = "\t".join(headings)
+	print(header, file=fo)
+	
+	# 7 (Isset) first test case
+	# 31 (Menard) has "Consideration"
+	# 33 (Santaw) has "additional documents"
+	# 35 (Rusch) has two additional documents
+	# xaction = xactions[35]
+	# print_xaction(xaction.parent.parent.parent)
+	
+	for xaction in xactions:
+		print_xaction(xaction.parent.parent.parent)
 
-    global fi
-    fi = theArgs.infile  # the argument parsing returns open file objects
-    global fo
-    fo = theArgs.outfile
-    global fe
-    fe = theArgs.errfile
-
-    soup = BeautifulSoup(fi, 'html.parser')
-    # print the "prettified" file to stderr
-    print(soup.prettify(), file=fe)
-
-    xactions = soup.find_all("button", class_="font-semibold")
-    # print(first_xaction.parent.parent.prettify())
-    # print(list(xaction.parent.parent))
-
-    headings = [ "ID", "Date", "Type", "-", "Book&Page", "Pages", "Party1", "Party2", "Legal", "Notes", "Return to", "Consideration", "Assoc. Docs"]
-    header = "\t".join(headings)
-    print(header, file=fo)
-
-    # 7 (Isset) first test case
-    # 31 (Menard) has "Consideration"
-    # 33 (Santaw) has "additional documents"
-    # 35 (Rusch) has two additional documents
-    # xaction = xactions[35]
-    # print_xaction(xaction.parent.parent.parent)
-
-    for xaction in xactions:
-        print_xaction(xaction.parent.parent.parent)
 
 def print_xaction(x):
-    entire_contents = x.contents
-    # print(repr(entire_contents))
-    cols = x.find_all(class_="w-1/4")
-    # print(len(cols))
-    # print("Entire Transaction: ", len(entire))
-    # print(len(entire_contents), " items in entire")
-    transaction_line = print_firstcol(cols[0])
-    transaction_line += "\t" + print_partycol(cols[1])
-    transaction_line += "\t" + print_legalcol(cols[2])
-    transaction_line += "\t" + print_finalcol(cols[3])
-    print(transaction_line,file=fo)
+	collectDate = datetime.now().strftime("%Y-%m-%d")
+	entire_contents = x.contents
+	# print(repr(entire_contents))
+	cols = x.find_all(class_="w-1/4")
+	# print(len(cols))
+	# print("Entire Transaction: ", len(entire))
+	# print(len(entire_contents), " items in entire")
+	transaction_line = print_firstcol(cols[0])
+	transaction_line += "\t" + print_partycol(cols[1])
+	transaction_line += "\t" + print_legalcol(cols[2])
+	transaction_line += "\t" + print_finalcol(cols[3])
+	transaction_line += "\t" + "" + "\t" + collectDate
+	print(transaction_line, file=fo)
+
 
 '''
 Print the "first column" containing
@@ -93,60 +108,73 @@ Print the "first column" containing
 (It's really annoying to find the correct offsets - it seems to change 
 from day to day - or run to run? The "3" and "5" below are just magic for this run)
 '''
+
+
 def print_firstcol(col):
-    firstcolcontents = col.contents # return a list of the contents
-    # print(len(something), " items in something")
-    # summary=firstcol[0].contents
-    # print(len(summary), " items in summary")
-    # print(summary)
-    # ct = len(firstcol)
-    # print(firstcol[ct-2])
-    # line = "Col1"
-    line = firstcolcontents[-2].text  # Get the transactionID (second to last?)
-    # print("ID: ",summary[2].text)
-    for child in firstcolcontents[-1]: # Get the last element (?)
-        # print("Type: ",type(child))
-        if type(child) == bs4.element.Tag:
-            t = child.text
-            if t == "":
-                t = "-"
-            line += "\t" + t
-            # print(child.text)
-    return line
+	firstcolcontents = col.contents  # return a list of the contents
+	# print(len(something), " items in something")
+	# summary=firstcol[0].contents
+	# print(len(summary), " items in summary")
+	# print(summary)
+	# ct = len(firstcol)
+	# print(firstcol[ct-2])
+	# line = "Col1"
+	line = firstcolcontents[-2].text  # Get the transactionID (second to last?)
+	# print("ID: ",summary[2].text)
+	for child in firstcolcontents[-1]:  # Get the last element (?)
+		# print("Type: ",type(child))
+		if type(child) == bs4.element.Tag:
+			t = child.text
+			if t == "":
+				t = "-"
+			line += "\t" + t
+			if "/" in t:  # also split mm/dd/yyyy hh:mm:ss AM
+				ary = t.split(" ")
+				line += "\t" + ary[0] + "\t" + "-"
+			if "B:" in t:  # also split on B:123 P:456
+				ary = t.split(" ")
+				line += "\t" + ary[0][2:] + "\t" + ary[1][2:]
+	# print(child.text)
+	return line
+
 
 def print_partycol(col):
-    # Print Parties
-    # print("==========")
-    # print(repr(cols[1]))
+	# Print Parties
+	# print("==========")
+	# print(repr(cols[1]))
+	
+	partycol = col  # return a list of the contents
+	# print("Parties: ",partycol)
+	parties = partycol.find_all("label")
+	# print(len(partycol))
+	partynames = ["", "", ""]
+	inparty = 0
+	line = ""
+	for party in parties:
+		if party.text == "Party 1:":
+			inparty = 1
+		elif party.text == "Party 2:":
+			inparty = 2
+		elif party.text == "Parties":
+			continue
+		else:
+			if partynames[inparty] != "":
+				partynames[inparty] = partynames[inparty] + ", "
+			partynames[inparty] = partynames[inparty] + party.text.strip()
+	# .replace(" ETA "," ")
+	# print(partynames)
+	line += partynames[1] + "\t" + partynames[2]
+	# print(line)
+	return line
 
-    partycol = col # return a list of the contents
-    # print("Parties: ",partycol)
-    parties = partycol.find_all("label")
-    # print(len(partycol))
-    partynames = [ "", "", ""]
-    inparty = 0
-    line = ""
-    for party in parties:
-        if party.text == "Party 1:":
-            inparty = 1
-        elif party.text == "Party 2:":
-            inparty = 2
-        elif party.text == "Parties":
-            continue
-        else:
-            if partynames[inparty] != "":
-                partynames[inparty] = partynames[inparty] + ", "
-            partynames[inparty] = partynames[inparty] + party.text.strip()
-                # .replace(" ETA "," ")
-        # print(partynames)
-    line += partynames[1] + "\t" + partynames[2]
-    # print(line)
-    return line
 
-    # Print the "legal stuff"
+# Print the "legal stuff"
+
+
 def print_legalcol(col):
-    # print(repr(col))
-    return "Lyme"
+	# print(repr(col))
+	return "Lyme"
+
 
 # Print the "final stuff"
 # Parse out:
@@ -156,61 +184,67 @@ def print_legalcol(col):
 #   - Associated Documents
 
 def print_finalcol(col):
-    # print("Final Column")
-    # print(repr(col))
-    final = col.find_all("label")
-    # print(len(final))
-    finalnames = ["-", "-", "-", "-", "-"]
-    whichname = 0
-    for item in final:
-        # print(item.text)
-        if item.text == "Notes:":
-            whichname = 1
-        elif item.text == "Return To:":
-            whichname = 2
-        elif item.text == "Consideration:":
-            whichname = 3
-        elif item.text == "Associated Documents":
-            whichname = 4
-        elif item.text == "Additional":
-            continue
-        else:
-            update_names(finalnames, whichname, item)
-    final = col.find_all("a")
-    for item in final:
-        # print(item.text)
-        update_names(finalnames, 4, item)
-    # print(finalnames)
-    line = finalnames[1] + "\t" + finalnames[2] + "\t" + finalnames[3] + "\t" + finalnames[4]
-    return line
+	# print("Final Column")
+	# print(repr(col))
+	final = col.find_all("label")
+	# print(len(final))
+	finalnames = ["-", "-", "-", "-", "-"]
+	whichname = 0
+	for item in final:
+		# print(item.text)
+		if item.text == "Notes:":
+			whichname = 1
+		elif item.text == "Return To:":
+			whichname = 2
+		elif item.text == "Consideration:":
+			whichname = 3
+		elif item.text == "Associated Documents":
+			whichname = 4
+		elif item.text == "Additional":
+			continue
+		else:
+			update_names(finalnames, whichname, item)
+	final = col.find_all("a")
+	for item in final:
+		# print(item.text)
+		update_names(finalnames, 4, item)
+	# print(finalnames)
+	line = finalnames[1] + "\t" + finalnames[2] + "\t" + finalnames[3] + "\t" + \
+		   finalnames[4]
+	return line
+
 
 def update_names(finalnames, whichname, item):
-    if finalnames[whichname] == "-":
-        finalnames[whichname] = ""
-    if whichname == 2 and finalnames[2] != "":  # Just add lawyer's name, not address
-        return
-    if finalnames[whichname] != "":  # add ", " if something's there
-        finalnames[whichname] = finalnames[whichname] + ", "
-    finalnames[whichname] = finalnames[whichname] + item.text.strip()
-    # .replace(" ETA "," ")
+	if finalnames[whichname] == "-":
+		finalnames[whichname] = ""
+	if whichname == 2 and finalnames[
+		2] != "":  # Just add lawyer's name, not address
+		return
+	if finalnames[whichname] != "":  # add ", " if something's there
+		finalnames[whichname] = finalnames[whichname] + ", "
+	finalnames[whichname] = finalnames[whichname] + item.text.strip()
 
-    # print("--- and the repr() ---")
-    # print(repr(x))
-    # xid = x.find(class_="font-semibold")
-    # print(xid.text)
-    # print(repr(xid.next_sibling.next_sibling))
-    # print(repr(xid.next_sibling.next_sibling.next_sibling))
-    # xdetails = x.find_all("label", class_="block")
-    # print(len(xdetails))
-    # print(xdetails.text)
-    # for y in xdetails:
-    #     print(y.text)
-    # print("Hi Rich!")
-    # chillins = soup.find_all('div', class_='rounded-sm pb-2 bg-white')
-    # print(len(chillins))
-    # print(list(chillins))
-    # for child in soup.contents[1].children:
-    #     print(child)
+
+# .replace(" ETA "," ")
+
+# print("--- and the repr() ---")
+# print(repr(x))
+# xid = x.find(class_="font-semibold")
+# print(xid.text)
+# print(repr(xid.next_sibling.next_sibling))
+# print(repr(xid.next_sibling.next_sibling.next_sibling))
+# xdetails = x.find_all("label", class_="block")
+# print(len(xdetails))
+# print(xdetails.text)
+# for y in xdetails:
+#     print(y.text)
+# print("Hi Rich!")
+# chillins = soup.find_all('div', class_='rounded-sm pb-2 bg-white')
+# print(len(chillins))
+# print(list(chillins))
+# for child in soup.contents[1].children:
+#     print(child)
+
 
 # --- the remainder of this code was cut out of the scrapvgsi.py app
 # # from collections import OrderedDict
@@ -463,6 +497,4 @@ def update_names(finalnames, whichname, item):
 #
 
 if __name__ == "__main__":
-    sys.exit(main())
-
-
+	sys.exit(main())
