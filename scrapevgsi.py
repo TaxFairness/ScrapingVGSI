@@ -115,12 +115,17 @@ def displayHeading():
     output_string = ""
     for x in range(len(domIDs)):
         output_string += domIDs[x][1] + "\t"
+        if domIDs[x][1] == "MBLU":
+            output_string += "Map\tLot\tUnit\tSub\t"
+        if domIDs[x][1] == "Book&Page":
+            output_string += "Book\tPage\t"
     # for x in range(len(tableIDs)):
     #     output_string += tableIDs[x] + "\t"
     for x in range(len(saleTableIDs)):
         output_string += saleTableIDs[x] + "\t"
     for x in range(len(valuationHistoryIDs)):
         output_string += valuationHistoryIDs[x] + "\t"
+    output_string += "Time\tRecord#\tCollectedOn"
     return output_string
 
 '''
@@ -229,13 +234,20 @@ def main(argv=None):
         
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
+        current_date = now.strftime("%Y-%m-%d")
         
         # First print the random fields from the page
         output_string = ""
         for x in range(len(domIDs)):
             result = soup.find(id=domIDs[x][0])
             output_string += result.text + "\t"
-        
+            if domIDs[x][0] == "MainContent_lblBp": # also split Book&Page
+                ary = result.text.split("/")
+                output_string += ary[0] + "\t" + ary[1] + "\t"
+            if domIDs[x][0] == "MainContent_lblMblu":  # also split MBLU
+                ary = result.text.split("/")
+                output_string += ary[0].strip() + "\t" + ary[1].strip() + "\t" + ary[2].strip() + "\t" + ary[3].strip() + "\t"
+
         # # Print the most recent appraisal date, Improvements, Land, and Total
         # table = soup.find(
         #     lambda tag: tag.name == 'table' and tag.has_attr('id') and tag['id'] == "MainContent_grdCurrentValueAppr")
@@ -324,8 +336,9 @@ def main(argv=None):
             appr = ""
         output_string += appr_imp + "\t" + appr_land + "\t" + appr_tot + "\t"
         
-        # Tack on a time stamp and row counter in separate columns
-        output_string += current_time + "\t%d" % recordCount
+        # Tack on time stamp, row counter, current_date in separate columns
+        
+        output_string += "%s\t%d\t%s" % (current_time, recordCount, current_date)
         print(output_string, file=fo)
         print(output_string)
 
