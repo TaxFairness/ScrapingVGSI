@@ -16,10 +16,12 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
-import random
+import beepy as beep
 
 # import re
-# import os
+import os
+from requests.exceptions import HTTPError
+from requests.exceptions import ConnectionError
 
 # from collections import OrderedDict
 
@@ -193,6 +195,14 @@ def splitBookAndPage(bnp):
     return ary
 
 '''
+beep - claimed to work on macOS
+https://stackoverflow.com/a/24634221/1827982
+'''
+def beep():
+    os.system("printf '\a'")  # or '\7'
+
+
+'''
 Main Function
 
 Parse arguments
@@ -237,6 +247,8 @@ def main(argv=None):
     print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n",file=fapprl)
     print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n",file=fassmt)
 
+    beep()
+    
     from http.client import HTTPConnection
     
     recordCount = 0
@@ -247,7 +259,7 @@ def main(argv=None):
             break
         
         # if not theArgs.debug:
-        time.sleep(2)  # wait 2 seconds before next query
+        time.sleep(0.5)  # wait 2 seconds before next query
             
         thePID = ids[0]
         url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % (thePID)
@@ -259,9 +271,9 @@ def main(argv=None):
             HTTPConnection.debuglevel = 0
             requests.packages.urllib3.disable_warnings()
             page = requests.get(url, verify=False)
-            from requests.exceptions import HTTPError
-        except HTTPError as e:
-            print(e.response.text)
+        except ConnectionError as e:
+            beep()
+            # print(e.response.text)
             output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
                 ids[0], ids[1], ids[2])
             print(output_string, file=fo)

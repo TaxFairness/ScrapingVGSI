@@ -16,10 +16,12 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
-import random
+# import random
 
 # import re
 # import os
+from http.client import HTTPConnection
+# from requests.exceptions import HTTPError, ConnectionError
 
 # from collections import OrderedDict
 
@@ -103,6 +105,8 @@ displayHeading
 
 Return a string containing all the headings for the output file
 '''
+
+
 def displayHeading():
     # Print the heading row, with all the column names
     output_string = ""
@@ -110,7 +114,7 @@ def displayHeading():
         output_string += "%s\t" % domIDs[x][1]
         if domIDs[x][1] == "MBLU":  # add column headings for expanded MBLU
             output_string += "Map\tLot\tUnit\tSub\t"
-        if domIDs[x][1] == "Book&Page": # add column headings for Book & Page
+        if domIDs[x][1] == "Book&Page":  # add column headings for Book & Page
             output_string += "Book\tPage\t"
     # for x in range(len(tableIDs)):
     #     output_string += tableIDs[x] + "\t"
@@ -121,12 +125,15 @@ def displayHeading():
     output_string += "CollectedOn\tRecord#"
     return output_string
 
+
 '''
 handleOwnerHistory
 
 Return a string containing a set of lines that represent the Ownership History.
 Includes: Owner, Sale Price, Certificate, Book&Page, Instrument, Sale Date
 '''
+
+
 def handleOwnerHistory(theSoup, pid):
     now = datetime.now()
     current_date = now.strftime("%Y-%m-%d")
@@ -145,7 +152,7 @@ def handleOwnerHistory(theSoup, pid):
                 cellCols.append(bnp[0])         # add in separate Book
                 cellCols.append(bnp[1])         # and Page
         if len(cellCols) == 7:                  # add in "-" for Instrument if it's missing
-            cellCols.insert(6,"-")              # (sometimes it is)
+            cellCols.insert(6, "-")             # (sometimes it is)
         if len(cellCols) != 0:
             cellCols.append(pid)                # put pid on the end
             cellCols.append(current_date)
@@ -175,8 +182,8 @@ def handleAppAssHistory(theSoup, theID, pid):
         cells = row.findChildren('td')          # get the cells into an array
         cellCols = []
         for cell in cells:
-            if cell != []:
-                cellCols.append(cell.string)
+            if cell:
+                cellCols.append(cell.text)
         if len(cellCols) != 0:
             cellCols.append(pid)                # put pid on the end
             cellCols.append(current_date)
@@ -184,13 +191,64 @@ def handleAppAssHistory(theSoup, theID, pid):
             outputStr += "\n"                   # and a newline
     return outputStr
 
+
 '''
 splitBookAndPage - split the book and page (in BBBB/PPPP format)
     into BBBB\tPPPP\t columns
 '''
+
+
 def splitBookAndPage(bnp):
     ary = bnp.text.split("/")
     return ary
+
+# '''
+# beep - claimed to work on macOS
+# https://stackoverflow.com/a/24634221/1827982
+# '''
+# def beep():
+#     os.system("printf '\a'")  # or '\7'
+
+
+'''
+getNewPage() - request next PID from the infile, return it
+Delay for a while if the Vision server gives an error/refusing to return result
+'''
+
+
+def getNextPage(infile, fo):
+    ids = infile.readNextVisionID()
+    if not ids:  # EOF
+        return None
+    
+    time.sleep(0.5)
+    # time.sleep(
+    #     10 + 5 * random.random())  # wait a few seconds before next query
+    
+    thePID = ids[0]
+    url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % thePID
+    
+    # if theArgs.debug:
+    #     print(url, file=fe)
+    
+    page = None
+    while page is None:
+    
+        try:
+            HTTPConnection.debuglevel = 0
+            requests.packages.urllib3.disable_warnings()
+            page = requests.get(url, verify=False)
+            return [page, thePID]
+        # See https://stackoverflow.com/questions/9054820/python-requests-exception-handling/57239688#57239688
+        except requests.exceptions.RequestException as e:  # might catch all exceptions?
+            # beep()
+            # print(e.response.text)
+            output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
+                ids[0], ids[1], ids[2])
+            print(output_string, file=fo)
+            page = None
+            time.sleep(20)
+
 
 '''
 Main Function
@@ -223,57 +281,33 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
     # fo = theArgs.outfile
-    fo = open("ScrapedData_%s.tsv"%output_date, "wt")
-    fowner = open("OwnerHistory_%s.tsv"%output_date, "wt") # Ownership History
-    fapprl = open("ApprlHistory_%s.tsv"%output_date, "wt") # Appraisal History
-    fassmt = open("AssmtHistory_%s.tsv"%output_date, "wt") # Assessment History
+    fo = open("ScrapedData_%s.tsv" % output_date, "wt")
+    fowner = open("OwnerHistory_%s.tsv" % output_date, "wt")  # Ownership History
+    fapprl = open("ApprlHistory_%s.tsv" % output_date, "wt")  # Appraisal History
+    fassmt = open("AssmtHistory_%s.tsv" % output_date, "wt")  # Assessment History
 
     infile = VisionIDFile(fi)
     
     # Print the heading row, with all the column names
     output_string = displayHeading()
     print(output_string, file=fo)
-    print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn\n",file=fowner)
-    print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n",file=fapprl)
-    print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n",file=fassmt)
+    print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn\n", file=fowner)
+    print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fapprl)
+    print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fassmt)
 
-    from http.client import HTTPConnection
-    
     recordCount = 0
     while True:
         recordCount += 1
-        ids = infile.readNextVisionID()
-        if ids == []:  # EOF
+        [page, thePID] = getNextPage(fi, fo)  # Get the next record from Vision
+        
+        if page is None:
             break
-        
-        if not theArgs.debug:
-            time.sleep(
-                10 + 5 * random.random())  # wait a few seconds before next query
-            
-        thePID = ids[0]
-        url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % (thePID)
-        
-        if theArgs.debug:
-            print(url, file=fe)
-        
-        try:
-            HTTPConnection.debuglevel = 0
-            requests.packages.urllib3.disable_warnings()
-            page = requests.get(url, verify=False)
-            from requests.exceptions import HTTPError
-        except HTTPError as e:
-            print(e.response.text)
-            output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
-                ids[0], ids[1], ids[2])
-            print(output_string, file=fo)
-            continue
         
         inStr = page.text
         if inStr.find(
                 'There was an error loading the parcel') >= 0:  # string present
             output_string = \
-                "%s\tProblem loading parcel PID %s, Map %s Lot %s" % (
-                ids[0], ids[0], ids[1], ids[2])
+                "%s\tProblem loading parcel PID %s" % (thePID)
             print(output_string, file=fo)
             continue
         
@@ -317,8 +351,7 @@ def main(argv=None):
         prevSalesStr = ""
         for x in range(1, len(rows)):
             vals = rows[x].contents
-            if vals[2].text == "$0" or vals[
-                2].text == recentSale:  # no new info
+            if vals[2].text == "$0" or vals[2].text == recentSale:  # no new info
                 continue
             dateIx = len(vals) - 2  # sometimes five columns, sometimes 6 :-(
             prevSalesStr += "%s\t%s\t" % (vals[2].text, vals[dateIx].text)
@@ -391,10 +424,10 @@ def main(argv=None):
         histStr = handleOwnerHistory(soup, thePID)
         print(histStr, file=fowner)
         # Output the history of the Appraisals
-        histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAppr" ,thePID)
+        histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAppr", thePID)
         print(histStr, file=fapprl)
         # Output the history of the Assessments
-        histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAsmt" ,thePID)
+        histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAsmt", thePID)
         print(histStr, file=fassmt)
 
 
