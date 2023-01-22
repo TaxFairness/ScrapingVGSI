@@ -223,10 +223,10 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
     # fo = theArgs.outfile
-    fo = open("ScrapedData_%s.tsv"%output_date, "wt")
-    fowner = open("OwnerHistory_%s.tsv"%output_date, "wt") # Ownership History
-    fapprl = open("ApprlHistory_%s.tsv"%output_date, "wt") # Appraisal History
-    fassmt = open("AssmtHistory_%s.tsv"%output_date, "wt") # Assessment History
+    fo = open("FASTScrapedData_%s.tsv"%output_date, "wt")
+    fowner = open("FASTOwnerHistory_%s.tsv"%output_date, "wt") # Ownership History
+    fapprl = open("FASTApprlHistory_%s.tsv"%output_date, "wt") # Appraisal History
+    fassmt = open("FASTAssmtHistory_%s.tsv"%output_date, "wt") # Assessment History
 
     infile = VisionIDFile(fi)
     
@@ -246,9 +246,8 @@ def main(argv=None):
         if ids == []:  # EOF
             break
         
-        if not theArgs.debug:
-            time.sleep(
-                10 + 5 * random.random())  # wait a few seconds before next query
+        # if not theArgs.debug:
+        time.sleep(2)  # wait 2 seconds before next query
             
         thePID = ids[0]
         url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % (thePID)
