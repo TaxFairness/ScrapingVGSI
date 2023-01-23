@@ -45,9 +45,11 @@ class VisionIDFile:
             line = self.theFile.readline()
             if line == "":
                 return []  # hit EOF
-            if line[0] != "#":
-                break  # Non-comment line - break out of loop
-        
+            if line.find("#") != -1:
+                continue  # Comment line - keep looking
+            else:
+                break
+                
         vals = line.strip().split(",")
         return vals
 
@@ -211,7 +213,7 @@ def splitBookAndPage(bnp):
 
 
 '''
-getNewPage() - request next PID from the infile, return it
+getNewPage() - request next PID from the infile, return the page and the PID
 Delay for a while if the Vision server gives an error/refusing to return result
 '''
 
@@ -219,11 +221,11 @@ Delay for a while if the Vision server gives an error/refusing to return result
 def getNextPage(infile, fo):
     ids = infile.readNextVisionID()
     if not ids:  # EOF
-        return None
+        return [None, 0]
     
+    # if not theArgs.debug:
     time.sleep(0.5)
-    # time.sleep(
-    #     10 + 5 * random.random())  # wait a few seconds before next query
+        # time.sleep(10 + 5 * random.random())  # wait a few seconds before next query
     
     thePID = ids[0]
     url = "https://gis.vgsi.com/lymeNH/Parcel.aspx?pid=%s" % thePID
@@ -243,7 +245,7 @@ def getNextPage(infile, fo):
         except requests.exceptions.RequestException as e:  # might catch all exceptions?
             # beep()
             # print(e.response.text)
-            output_string = "%s\tCan't reach the server\t\t\t%s?\t%s?" % (
+            output_string = "\tCan't reach the server\t%s\t%s\t%s" % (
                 ids[0], ids[1], ids[2])
             print(output_string, file=fo)
             page = None
@@ -298,7 +300,7 @@ def main(argv=None):
     recordCount = 0
     while True:
         recordCount += 1
-        [page, thePID] = getNextPage(fi, fo)  # Get the next record from Vision
+        [page, thePID] = getNextPage(infile, fo)  # Get the next record from Vision
         
         if page is None:
             break
@@ -306,8 +308,7 @@ def main(argv=None):
         inStr = page.text
         if inStr.find(
                 'There was an error loading the parcel') >= 0:  # string present
-            output_string = \
-                "%s\tProblem loading parcel PID %s" % (thePID)
+            output_string = "\tProblem loading parcel PID\t%s" % (thePID)
             print(output_string, file=fo)
             continue
         
