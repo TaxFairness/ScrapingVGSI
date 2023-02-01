@@ -16,6 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
+from playsound import playsound
 # import random
 
 # import re
@@ -204,12 +205,12 @@ def splitBookAndPage(bnp):
     ary = bnp.text.split("/")
     return ary
 
-# '''
-# beep - claimed to work on macOS
-# https://stackoverflow.com/a/24634221/1827982
-# '''
-# def beep():
-#     os.system("printf '\a'")  # or '\7'
+'''
+beep - play a short beep sound
+Beep .mp3 file from https://www.soundjay.com/beep-sounds-1.html
+'''
+def beep():
+    playsound('TestData/beep-02.mp3')
 
 
 '''
@@ -218,7 +219,7 @@ Delay for a while if the Vision server gives an error/refusing to return result
 '''
 
 
-def getNextPage(infile, fo):
+def getNextPage(infile, fe):
     ids = infile.readNextVisionID()
     if not ids:  # EOF
         return [None, 0]
@@ -243,11 +244,10 @@ def getNextPage(infile, fo):
             return [page, thePID]
         # See https://stackoverflow.com/questions/9054820/python-requests-exception-handling/57239688#57239688
         except requests.exceptions.RequestException as e:  # might catch all exceptions?
-            # beep()
-            # print(e.response.text)
-            output_string = "\tCan't reach the server\t%s\t%s\t%s" % (
-                ids[0], ids[1], ids[2])
-            print(output_string, file=fo)
+            beep()
+            output_string = "Exception retrieving PID %s: Waiting to retry..." % (
+                ids[0])
+            print(output_string, file=fe)
             page = None
             time.sleep(20)
 
@@ -279,6 +279,8 @@ def main(argv=None):
 
     output_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
+    # beep()
+    
     # print(output_date)
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
@@ -300,7 +302,7 @@ def main(argv=None):
     recordCount = 0
     while True:
         recordCount += 1
-        [page, thePID] = getNextPage(infile, fo)  # Get the next record from Vision
+        [page, thePID] = getNextPage(infile, fe)  # Get the next record from Vision
         
         if page is None:
             break
@@ -430,7 +432,13 @@ def main(argv=None):
         # Output the history of the Assessments
         histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAsmt", thePID)
         print(histStr, file=fassmt)
-
-
+        
+    # And we're done
+    beep()
+    time.sleep(0.5)
+    beep()
+    time.sleep(0.5)
+    beep()
+    
 if __name__ == "__main__":
     sys.exit(main())

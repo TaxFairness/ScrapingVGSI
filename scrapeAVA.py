@@ -1,9 +1,11 @@
 '''
 Scrape AVA Records from Grafton County Register of Deeds
 
-Input is a HTML file that contains a list of records.
+Input is a HTML file that contains a list of records. Create this file
+by doing a search on the AVA site at Grafton County, then Inspect Element
+and Copy Outer HTML.
 
-Output is a TSV file that contains the fields selected  using the #id fields
+Output is a TSV file that contains the fields selected using the #id fields
 from the HTML file. Those IDs are contained in an array of text strings.
 '''
 
