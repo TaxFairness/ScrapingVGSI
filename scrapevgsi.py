@@ -101,7 +101,7 @@ valuationHistoryIDs = [
     "Prev. App. Land",
     "Prev. App. Tot"
 ]
-ownershipHistoryID = "MainContent_grdSales"
+# ownershipHistoryID = "MainContent_grdSales"
 
 '''
 displayHeading
@@ -137,11 +137,11 @@ Includes: Owner, Sale Price, Certificate, Book&Page, Instrument, Sale Date
 '''
 
 
-def handleOwnerHistory(theSoup, pid):
+def handleOwnerHistory(theSoup, theID, pid):
     now = datetime.now()
     current_date = now.strftime("%Y-%m-%d")
     
-    historyTable = theSoup.find(id=ownershipHistoryID)
+    historyTable = theSoup.find(id=theID)
     htRows = historyTable.find_all('tr')
     outputStr = ""
     for row in htRows:                          # for each row of the history table
@@ -285,7 +285,7 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
     # fo = theArgs.outfile
-    fo = open("ScrapedData_%s.tsv" % output_date, "wt")
+    fo = open("ScrapeDataXX_%s.tsv" % output_date, "wt")
     fowner = open("OwnerHistory_%s.tsv" % output_date, "wt")  # Ownership History
     fapprl = open("ApprlHistory_%s.tsv" % output_date, "wt")  # Appraisal History
     fassmt = open("AssmtHistory_%s.tsv" % output_date, "wt")  # Assessment History
@@ -424,7 +424,7 @@ def main(argv=None):
         print(output_string)
 
         # Output the recent ownership history into a separate file
-        histStr = handleOwnerHistory(soup, thePID)
+        histStr = handleOwnerHistory(soup, "MainContent_grdSales", thePID)
         print(histStr, file=fowner)
         # Output the history of the Appraisals
         histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAppr", thePID)

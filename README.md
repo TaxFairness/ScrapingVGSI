@@ -119,13 +119,14 @@ Begin the process at the final date of interest, then keep adjusting
 the beginning date to produce fewer than 200 results.
 
 Then use the Browser's "Inspect" facility to Copy the Outer HTML,
-and paste the information into a separte .html file representing
-that date range.
+and paste the information into a separate .html file representing
+that date range. Save the file in `HTML/MMMMYYYY.html`
 
 The `scrapingAVA.py` file sucks in each of those files
 and produces a tab-delimited file that includes all the records. 
+**Run -> Edit configuration...** to read the proper HTML file.
 
-For extra credit, go through each line 
+The program outputs a file named `AVA_Records-timestamp.tsv`
 
 ## Processing the `.tsv` files
 
