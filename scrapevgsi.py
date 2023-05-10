@@ -193,8 +193,156 @@ def handleAppAssHistory(theSoup, theID, pid):
             outputStr += "\t".join(cellCols)    # output all the columns
             outputStr += "\n"                   # and a newline
     return outputStr
+    
+'''
+handleBuildings
+
+Return a string that represents the buildings on the parcel, one line per building
+Parameters:
+- theSoup - the entire page
+- theID - Should be "" - this code knows which tables to parse
+- pid - the PID associated with this property
+
+Each building's line includes:
+PID, Building Number, Year built, Living Area, Replacement Cost, Percent Good, Value less Depreciation,
+Style, Model,Stories, Total BR, Total Bath, Total Half-bath, Total Rooms, Num Kitchens,
+Gross floor area, Living Area,
+CollectedOn
+
+Notes:
+ - must iterate through each of the buildings, replacing "**" in the domID
+    with 01, 02, 03 until no such DOM element
+ - Clean up random legends within data fields using plainValue()
+'''
+
+buildingIDs = [
+    ["MainContent_ctl**_lblYearBuilt","Year Built"],
+    ["MainContent_ctl**_lblBldArea","Living Area"],
+    ["MainContent_ctl**_lblRcn","Replacement Cost"],
+    ["MainContent_ctl**_lblPctGood","Percent Good"],
+    ["MainContent_ctl**_lblRcnld","Value after Depreciation"]
+]
+buildingAttributeTable = "MainContent_ctl**_grdCns"
+buildingAreaTable = "MainContent_ctl**_grdSub"
+buildingAttrs = [
+    "Style",
+    "Model",
+    "Grade",
+    "Stories",
+    "Total Bedrooms",
+    "Total Bthrms",
+    "Total Half Baths",
+    "Total Rooms",
+    "Num Kitchens"
+]
+'''
+subsBuilding - takes a DOM ID (a string) with embedded "**"
+and substitutes the two-digit building number
+'''
+def subsBuilding(domID, bldg):
+    str1 = "0" + str(bldg)
+    str2 = str1[-2:]
+    return domID.replace("**",str2)
+
+'''
+plainValue() - Return a "plain value" string from the Vision value
+Remove Dollar sign and commas
+Remove selected strings (Rooms, Room, Stories, Story, etc.)
+Convert 1/2 and 3/4 to .5 and .75
+'''
+def plainValue(val):
+    retval = val
+    if isinstance(retval, str):
+        if val == "":
+            return ""
+        if val[0] == "$" or val[0].isdigit():
+            retval = val.replace("$","")
+            retval = retval.replace(",","")
+        retval = retval.replace(" Rooms","")
+        retval = retval.replace(" Room","")
+        retval = retval.replace(" Stories","")
+        retval = retval.replace(" Story","")
+        retval = retval.replace(" Bedrooms","")
+        retval = retval.replace(" Bedroom","")
+        retval = retval.replace(" 1/2",".5")
+        retval = retval.replace(" 3/4",".75")
+    return retval
+
+'''
+printBuildingHeader()
+Return a line containing the headings for the Buildings file
+'''
+def printBuildingHeader():
+    hdr = "PID\tBuilding #\t"
+    for x in range(len(buildingIDs)):
+        hdr += "%s\t" % buildingIDs[x][1]
+    for x in range(len(buildingAttrs)):
+        hdr += "%s\t" % buildingAttrs[x]
+    hdr += "Gross Floor Area\tLiving Area\t"
+    hdr += "CollectedOn"
+    return hdr
 
 
+'''
+The main function
+'''
+def handleBuildings(theSoup, theID, pid):
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    
+    retstr = ""
+    buildingNumber = 1
+    while True:
+        anID = subsBuilding(buildingIDs[0][0], buildingNumber)
+        if theSoup.find(id=anID) == None:
+            break
+            
+        # First output the PID
+        retstr += "%s\t%d\t" % (pid, buildingNumber)
+        
+        # Print the list of DOM items from buildingIDs
+        for x in range(len(buildingIDs)):
+            result = theSoup.find(id=subsBuilding(buildingIDs[x][0],buildingNumber))
+            retstr += "%s\t" % plainValue(result.text)
+        
+        # Print the list of items from Building Attribute Table
+        for x in range(len(buildingAttrs)):
+            tableID = subsBuilding(buildingAttributeTable,buildingNumber)
+            table = theSoup.find('table',{'id': tableID})
+            theAttr = buildingAttrs[x]
+            label_cell = table.find('td', text=theAttr)
+            if label_cell == None:  # does the label need a ":"?
+                theAttr += ":"
+                label_cell = table.find('td', text=theAttr)
+            if label_cell != None: #
+                value_cell = label_cell.find_next_sibling('td')
+                theValue = value_cell.text
+            else:
+                theValue = "MISSING-"+theAttr # if it's still None, then insert "MISSING"
+            retstr += "%s\t" % plainValue(theValue)
+        
+        # Find the last row of the right-hand table
+        # display the Gross Floor Area and the Living Area
+        tableID = subsBuilding(buildingAreaTable, buildingNumber)
+        table = theSoup.find('table', {'id': tableID})
+        last_row = table.find_all('tr')[-1]
+        values = []
+        for cell in last_row.find_all('td'):
+            values.append(cell.text.strip())
+        if len(values) == 4:
+            gross=values[2]
+            living=values[3]
+        else:
+            gross = "MISSING-Gross"
+            living = "Missing-Living"
+        retstr += "%s\t%s\t" % (plainValue(gross), plainValue(living))
+        
+        retstr += "%s\n" % current_date
+
+        # And on to the next one
+        buildingNumber += 1
+
+    return retstr
 '''
 splitBookAndPage - split the book and page (in BBBB/PPPP format)
     into BBBB\tPPPP\t columns
@@ -285,10 +433,11 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
     # fo = theArgs.outfile
-    fo = open("ScrapeDataXX_%s.tsv" % output_date, "wt")
+    fo     = open("ScrapeDataXX_%s.tsv" % output_date, "wt")
     fowner = open("OwnerHistory_%s.tsv" % output_date, "wt")  # Ownership History
     fapprl = open("ApprlHistory_%s.tsv" % output_date, "wt")  # Appraisal History
     fassmt = open("AssmtHistory_%s.tsv" % output_date, "wt")  # Assessment History
+    fbldgs = open("Buildings____%s.tsv" % output_date, "wt")  # Buildings
 
     infile = VisionIDFile(fi)
     
@@ -298,7 +447,8 @@ def main(argv=None):
     print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn\n", file=fowner)
     print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fapprl)
     print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fassmt)
-
+    print(printBuildingHeader(), file=fbldgs)
+    
     recordCount = 0
     while True:
         recordCount += 1
@@ -432,6 +582,9 @@ def main(argv=None):
         # Output the history of the Assessments
         histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAsmt", thePID)
         print(histStr, file=fassmt)
+        # Output information about each building
+        histStr = handleBuildings(soup, "", thePID)
+        print(histStr, end="", file=fbldgs)
         
     # And we're done
     beep()
