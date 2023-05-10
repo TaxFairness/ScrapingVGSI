@@ -255,6 +255,8 @@ def plainValue(val):
     if isinstance(retval, str):
         if val == "":
             return ""
+        if val.find("MISSING") >= 0:
+            return retval
         if val[0] == "$" or val[0].isdigit():
             retval = val.replace("$","")
             retval = retval.replace(",","")
