@@ -19,7 +19,7 @@ from datetime import datetime
 from playsound import playsound
 # import random
 
-# import re
+import re
 # import os
 from http.client import HTTPConnection
 # from requests.exceptions import HTTPError, ConnectionError
@@ -149,7 +149,7 @@ def handleOwnerHistory(theSoup, theID, pid):
         cellCols = []
         for cell in cells:
             if cell != []:
-                cellCols.append(cell.string)
+                cellCols.append(plainValue(cell.string))
             if len(cellCols) == 4:              # When adding the Book&Page
                 bnp = splitBookAndPage(cell)
                 cellCols.append(bnp[0])         # add in separate Book
@@ -167,12 +167,14 @@ def handleOwnerHistory(theSoup, theID, pid):
 handleAppAssHistory
 
 Return a string containing a set of lines that represent the Appraised or Assessed History.
+Each line has a \n, when it's output, don't add another one.
+
 Parameters:
 - theSoup - the entire page
 - theID - the table ID to parse
 - pid - the PID associated with this property
 
-Each table includes: Year, Improvements, Land, Total, CollectedOn
+Each table includes: Year, Improvements, Land, Total, PID, CollectedOn
 '''
 def handleAppAssHistory(theSoup, theID, pid):
     now = datetime.now()
@@ -186,7 +188,12 @@ def handleAppAssHistory(theSoup, theID, pid):
         cellCols = []
         for cell in cells:
             if cell:
-                cellCols.append(cell.text)
+                cellCols.append(plainValue(cell.text))
+        if len(cellCols) == 1:
+            cellCols[0] = "No Data for PID"
+            cellCols.append("")
+            cellCols.append("")
+            cellCols.append("")
         if len(cellCols) != 0:
             cellCols.append(pid)                # put pid on the end
             cellCols.append(current_date)
@@ -249,24 +256,29 @@ plainValue() - Return a "plain value" string from the Vision value
 Remove Dollar sign and commas
 Remove selected strings (Rooms, Room, Stories, Story, etc.)
 Convert 1/2 and 3/4 to .5 and .75
+Convert mm/dd/yyyy to yyyy-mm-dd
 '''
 def plainValue(val):
+    date_pattern = r"(\d{2})/(\d{2})/(\d{4})"
     retval = val
     if isinstance(retval, str):
-        if val == "":
+        if val == "":                           # empty string - return ""
             return ""
-        if val.find("MISSING") >= 0:
+        if val.find("MISSING") >= 0:            # Contains "MISSING", return it
             return retval
-        if val[0] == "$" or val[0].isdigit():
-            retval = val.replace("$","")
-            retval = retval.replace(",","")
-        retval = retval.replace(" Rooms","")
+        if re.match(date_pattern, val):         # Matches date mm/dd/yyyy
+            return re.sub(date_pattern, r"\3-\1-\2", val)
+        if val[0] == "$":                       # Dollar value: remove $ & ","
+            retval = val.replace("$","")        # never any cents so
+            retval = retval.replace(",","")     # don't worry about ".##"
+            return retval
+        retval = retval.replace(" Rooms","")    # remove odd strings
         retval = retval.replace(" Room","")
         retval = retval.replace(" Stories","")
         retval = retval.replace(" Story","")
         retval = retval.replace(" Bedrooms","")
         retval = retval.replace(" Bedroom","")
-        retval = retval.replace(" 1/2",".5")
+        retval = retval.replace(" 1/2",".5")    # and fractions
         retval = retval.replace(" 3/4",".75")
     return retval
 
@@ -435,20 +447,20 @@ def main(argv=None):
     fi = theArgs.infile  # the argument parsing returns open file objects
     fe = theArgs.errfile
     # fo = theArgs.outfile
-    fo     = open("ScrapeDataXX_%s.tsv" % output_date, "wt")
-    fowner = open("OwnerHistory_%s.tsv" % output_date, "wt")  # Ownership History
-    fapprl = open("ApprlHistory_%s.tsv" % output_date, "wt")  # Appraisal History
-    fassmt = open("AssmtHistory_%s.tsv" % output_date, "wt")  # Assessment History
-    fbldgs = open("Buildings____%s.tsv" % output_date, "wt")  # Buildings
+    fo     = open("ScrapeDataXX.tsv", "wt")  # ScrapeDataXX
+    fowner = open("OwnerHistory.tsv", "wt")  # Ownership History
+    fapprl = open("ApprlHistory.tsv", "wt")  # Appraisal History
+    fassmt = open("AssmtHistory.tsv", "wt")  # Assessment History
+    fbldgs = open("Buildings___.tsv", "wt")  # Buildings
 
     infile = VisionIDFile(fi)
     
     # Print the heading row, with all the column names
     output_string = displayHeading()
     print(output_string, file=fo)
-    print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn\n", file=fowner)
-    print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fapprl)
-    print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn\n", file=fassmt)
+    print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn", file=fowner)
+    print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn", file=fapprl)
+    print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn", file=fassmt)
     print(printBuildingHeader(), file=fbldgs)
     
     recordCount = 0
@@ -475,7 +487,7 @@ def main(argv=None):
         output_string = ""
         for x in range(len(domIDs)):
             result = soup.find(id=domIDs[x][0])
-            output_string += "%s\t" % result.text
+            output_string += "%s\t" % plainValue(result.text)
             if domIDs[x][0] == "MainContent_lblBp": # split Book&Page
                 ary = splitBookAndPage(result)
                 output_string += "%s\t%s\t" % (ary[0], ary[1])
@@ -494,7 +506,7 @@ def main(argv=None):
         # Print the recent sale price and date
         for x in range(len(saleDomIDs)):
             result = soup.find(id=saleDomIDs[x][0])
-            output_string += "%s\t" % result.text
+            output_string += "%s\t" % plainValue(result.text)
         
         # Print the most recent non-zero sale price and date
         # handle case where there isn't a value for either - just insert ""
@@ -509,7 +521,7 @@ def main(argv=None):
             if vals[2].text == "$0" or vals[2].text == recentSale:  # no new info
                 continue
             dateIx = len(vals) - 2  # sometimes five columns, sometimes 6 :-(
-            prevSalesStr += "%s\t%s\t" % (vals[2].text, vals[dateIx].text)
+            prevSalesStr += "%s\t%s\t" % (plainValue(vals[2].text), plainValue(vals[dateIx].text))
             break
         if prevSalesStr == "":
             prevSalesStr = "\t\t"
@@ -526,18 +538,18 @@ def main(argv=None):
         # First get Current Assessed Improvements/Land/Total
         try:
             vals = rows[1].contents
-            ass_imp = vals[2].text
-            ass_land = vals[3].text
-            ass_tot = vals[4].text
+            ass_imp = plainValue(vals[2].text)
+            ass_land = plainValue(vals[3].text)
+            ass_tot = plainValue(vals[4].text)
         except:
             appr = ""
         output_string += "%s\t%s\t%s\t" % (ass_imp, ass_land, ass_tot)
         # Then get Previous Assessed Improvements/Land/Total
         try:
             vals = rows[2].contents
-            ass_imp = vals[2].text
-            ass_land = vals[3].text
-            ass_tot = vals[4].text
+            ass_imp = plainValue(vals[2].text)
+            ass_land = plainValue(vals[3].text)
+            ass_tot = plainValue(vals[4].text)
         except:
             appr = ""
         output_string += "%s\t%s\t%s\t" % (ass_imp, ass_land, ass_tot)
@@ -553,9 +565,9 @@ def main(argv=None):
         appr_tot = ""
         try:
             vals = rows[1].contents
-            appr_imp = vals[2].text
-            appr_land = vals[3].text
-            appr_tot = vals[4].text
+            appr_imp = plainValue(vals[2].text)
+            appr_land = plainValue(vals[3].text)
+            appr_tot = plainValue(vals[4].text)
         except:
             appr = ""
         output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
@@ -563,9 +575,9 @@ def main(argv=None):
         # Then get Previous Appraised Improvements/Land/Total
         try:
             vals = rows[2].contents
-            appr_imp = vals[2].text
-            appr_land = vals[3].text
-            appr_tot = vals[4].text
+            appr_imp = plainValue(vals[2].text)
+            appr_land = plainValue(vals[3].text)
+            appr_tot = plainValue(vals[4].text)
         except:
             appr = ""
         output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
@@ -577,16 +589,16 @@ def main(argv=None):
 
         # Output the recent ownership history into a separate file
         histStr = handleOwnerHistory(soup, "MainContent_grdSales", thePID)
-        print(histStr, file=fowner)
+        print(histStr, file=fowner, end="")
         # Output the history of the Appraisals
         histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAppr", thePID)
-        print(histStr, file=fapprl)
+        print(histStr, file=fapprl, end="")
         # Output the history of the Assessments
         histStr = handleAppAssHistory(soup, "MainContent_grdHistoryValuesAsmt", thePID)
-        print(histStr, file=fassmt)
+        print(histStr, file=fassmt, end="")
         # Output information about each building
         histStr = handleBuildings(soup, "", thePID)
-        print(histStr, end="", file=fbldgs)
+        print(histStr, file=fbldgs, end="")
         
     # And we're done
     beep()
