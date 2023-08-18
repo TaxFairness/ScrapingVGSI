@@ -61,9 +61,7 @@ Then...
 * Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
 * Enter each of the map numbers (see list below)
 * Click through each of that map's pages
-* Copy each of those pages. Start to the left of **Address** 
-and drag across the last row.
-Do _not_ copy the page numbers - they screw up the columns of the .xlsx
+* Copy each of those pages. Use the Chrome extension ColumnCopy (I used version 0.5.0) to right-click and Copy Entire Table.
 * Paste into a spreadsheet
 * For extra credit, add a "page number" column to track each map's Page
 * Save the full results as a "Raw Data" page, and protect that sheet
@@ -71,30 +69,9 @@ Do _not_ copy the page numbers - they screw up the columns of the .xlsx
 * _That's it..._
 
 ```
-201 ... then skip to...
-401 ... the rest are in sequence...
-402
-403
-404
-405
-406
-407
-408
-409
-410
-411
-412
-413
-414
-415
-416
-417
-418
-419
-420
-421
-422
-
+# Map Numbers for Lyme
+201 and then ...
+401 .. 422
 ```
 
 ~~It may be possible to enumerate all PIDs from the Vision system
