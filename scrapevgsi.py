@@ -4,10 +4,16 @@ Scrape VGSI Records
 Retrieve VGSI records from their server (http://gsi.vgsi.com),
 then parse out interesting fields from the resulting HTML responses.
 
-Input is a CSV file that contains a list of "VisionID"s in this format:
+Input is a CSV file that contains a list of "VisionID"s, one per line.
+Default is set in Edit Configurations...
 
-Output is a TSV file that contains the fields selected  using the #id fields
-from the HTML file. Those IDs are contained in an array of text strings.
+Output is several tab-delimited files written to the current directory:
+
+- ScrapeDataXX.tsv # ScrapeDataXX
+- OwnerHistory.tsv # Ownership History
+- ApprlHistory.tsv # Appraisal History
+- AssmtHistory.tsv # Assessment History
+- Buildings___.tsv # Buildings
 '''
 
 import sys

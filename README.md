@@ -43,7 +43,8 @@ After the full set of records has been scraped into `.tsv` files,
 organize them by doing the following:
 
 - Check for errors:
-- Scan the ScrapeDataXX file for any "Can't reach the server" and fix those lines. (There shouldn't be any - the `scrapevgsi` program should recover from those errors.)
+- Scan the ScrapeDataXX file for any "Can't reach the server" and fix those lines.
+(There shouldn't be any - the `scrapevgsi` program should recover from those errors.)
 - Scan that file for "Problem..." and comment out that PID from the input file
 - Rerun if necessary. 
 
@@ -51,7 +52,7 @@ Then...
 
 - Create a new folder named _ScrapedData-ddMMMyyy_
 - Copy all five output files to that folder
-- Move that folder to the _TaxFairness/DefinitiveData/ScrapedData_ folder
+- Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
 - (Optional) Update the `import_crunched_data.sql` file in _TaxFairness_ to import those files into a new set of tables.
 
 ### Enumerating PIDs
@@ -105,7 +106,7 @@ The `scrapingAVA.py` file sucks in a HTML file
 and produces a tab-delimited file that includes all the records. 
 **Run -> Edit configuration...** to read the proper HTML file.
 
-The program outputs a file named `AVA_Records-timestamp.tsv` in the _AVA_GCRoD_ folder.
+The program outputs a file named `AVA_Records_YYYY-DD-MM_HH-MM-SS.tsv` in the _AVA_GCRoD_ folder.
 
 ### Processing the `.tsv` files
 
@@ -171,9 +172,9 @@ Remove lines from original Town file that are not in town's database
 
 ### To Do
 
-* Come up with a way to combine the XXXX_history files.
+* _DONE_ The `merge_history.sh` script in **TaxFairness** merges the history files. ~~Come up with a way to combine the XXXX_history files.
 They contain the latest information (generally, three years) from Vision.
 But the information will be lost when previous years' info gets pushed off
 by new years.
 This probably implies some fancy SQL import that replaces existing info
-new info from the same year (???).
+new info from the same year (???).~~
