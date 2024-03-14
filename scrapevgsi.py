@@ -163,7 +163,7 @@ def handleOwnerHistory(theSoup, theID, pid):
         if len(cellCols) == 7:                  # add in "-" for Instrument if it's missing
             cellCols.insert(6, "-")             # (sometimes it is)
         if len(cellCols) != 0:
-            cellCols.append(pid)                # put pid on the end
+            cellCols.insert(0, pid)     # put pid at the front
             cellCols.append(current_date)
             outputStr += "\t".join(cellCols)    # output all the columns
             outputStr += "\n"                   # and a newline
@@ -201,7 +201,7 @@ def handleAppAssHistory(theSoup, theID, pid):
             cellCols.append("")
             cellCols.append("")
         if len(cellCols) != 0:
-            cellCols.append(pid)                # put pid on the end
+            cellCols.insert(0, pid)    # put pid at the front
             cellCols.append(current_date)
             outputStr += "\t".join(cellCols)    # output all the columns
             outputStr += "\n"                   # and a newline
@@ -464,9 +464,9 @@ def main(argv=None):
     # Print the heading row, with all the column names
     output_string = displayHeading()
     print(output_string, file=fo)
-    print("Owner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tPID\tCollectedOn", file=fowner)
-    print("App. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn", file=fapprl)
-    print("Ass. Year\tImprovements\tLand\tTotal\tPID\tCollectedOn", file=fassmt)
+    print("PID\tOwner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tCollectedOn", file=fowner)
+    print("PID\tApp. Year\tImprovements\tLand\tTotal\tCollectedOn", file=fapprl)
+    print("PID\tAss. Year\tImprovements\tLand\tTotal\tCollectedOn", file=fassmt)
     print(printBuildingHeader(), file=fbldgs)
     
     recordCount = 0

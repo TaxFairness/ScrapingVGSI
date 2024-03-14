@@ -7,7 +7,7 @@ A set of tools for processing data from both Vision property tax records (used i
 The `scrapevgsi.py` script retrieves PIDs ("VisionID"s) from a file, and outputs a tab-separated file that shows selected fields from the resulting page.
 The script also pauses a bit between requests from VGSI to avoid overloading the Vision server.
 
-The script reads the `./PIDs/PIDs-Collected-ddMMMyyyy.csv` file named in **Run -> Edit Configurations...** 
+The script reads the `./PIDs/PIDs-Sorted-ddMMMyyyy.csv` file named in **Run -> Edit Configurations...** 
 The script outputs several files to the current directory.
 These overwrite any files produced by previous runs.
 
@@ -60,7 +60,7 @@ Then...
 **Here's the process for Enumerating PIDs. It takes ~20 minutes** 
 
 * Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
-* Enter each of the map numbers (see list below)
+* Enter each of the map numbers. They are `201` and `401 .. 422`
 * Click through each of that map's pages
 * Copy each of those pages. Use the Chrome extension ColumnCopy (I used version 0.5.0) to right-click and Copy Entire Table.
 * Paste into a spreadsheet
