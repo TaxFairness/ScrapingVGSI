@@ -131,7 +131,7 @@ def displayHeading():
         output_string += "%s\t" % saleTableIDs[x]
     for x in range(len(valuationHistoryIDs)):
         output_string += "%s\t" % valuationHistoryIDs[x]
-    output_string += "CollectedOn\tRecord#"
+    output_string += "Version\tCollectedOn\tRecord#"
     return output_string
 
 
@@ -588,8 +588,8 @@ def main(argv=None):
             appr = ""
         output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
         
-        # Tack on time stamp, row counter in separate columns
-        output_string += "%s\t%d" % (current_time, recordCount)
+        # Tack on (fake) version number, time stamp, row counter in separate columns
+        output_string += "Version?\t%s\t%d" % (current_time, recordCount)
         print(output_string, file=fo)
         print(output_string)
 
