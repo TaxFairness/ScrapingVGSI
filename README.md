@@ -112,15 +112,16 @@ The program outputs a file named `AVA_Records_YYYY-DD-MM_HH-MM-SS.tsv` in the _A
 
 * Open it, and save as `.xlsx` file for ease of formatting
 * Fix all the `PLAN` entries (see below)
-* Add all the Transfer Tax entries (see below)
 * Discard the `-` column between Type and Book&Page
 * Convert all dates to YYYY-MM-DD
 * Convert all prices to numeric, no decimals, no commas, no "$"
+* Add all the Transfer Tax entries (see below)
 * Create a new tab in the 
-_Tax Fairness/Raw Data/GCRoD-All-Data_**.XLSX** file
+_Tax Fairness/RawData/GCRoD-All-Data_**.XLSX** file
 and paste in this data
 * Append the new data to the "All Data" tab 
-* Export as a `.csv` file and import into SQLite
+* Export as **CSV** to _Tax Fairness/DefinitiveDataGCRoD-All-Data_**.CSV**
+and import into SQLite
 
 **Fixing "PLAN" entries:** These don't have a Book&Page entry, so the results
 for those rows are shifted several columns to the left.
