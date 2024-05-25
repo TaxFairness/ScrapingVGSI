@@ -54,43 +54,66 @@ def main(argv=None):
 	global fe
 	fe = theArgs.errfile
 	
-	soup = BeautifulSoup(fi, 'html.parser')
-	# print the "prettified" file to stderr
-	print(soup.prettify(), file=fe)
-	
-	xactions = soup.find_all("button", class_="font-semibold")
-	# print(first_xaction.parent.parent.prettify())
-	# print(list(xaction.parent.parent))
-	
+	# Print the header line
 	# NB: GCRoD does not display Transfer Tax as a scrapable value.
-	# Add in manually, and use "-" for values where no transfer tax recorded
+	# Print a blank column and search GCRoD manually for "DEEED"
+	# Enter the Transfer Tax recorded or use "-" where there is none
 	# Ignore LCHIP tax - it's the same on virtually all properties
-	headings = ["ID", "Date&Time", "Date", "Time", "Type", "Don't_Keep", "Book&Page",
+	headings = ["ID", "Date&Time", "Date", "Time", "Type", "Don't_Keep",
+				"Book&Page",
 				"Book", "Page", "Pages", "Party1",
 				"Party2", "Legal", "Notes", "Return to", "Consideration",
 				"Assoc. Docs", "Transfer Tax", "CollectedOn"]
 	header = "\t".join(headings)
 	print(header, file=fo)
-	
-	# 7 (Isset) first test case
-	# 31 (Menard) has "Consideration"
-	# 33 (Santaw) has "additional documents"
-	# 35 (Rusch) has two additional documents
-	# xaction = xactions[35]
-	# print_xaction(xaction.parent.parent.parent)
-	
-	for xaction in xactions:
-		print_xaction(xaction.parent.parent.parent)
 
+	# Parse the HTML
+	soup = BeautifulSoup(fi, 'html.parser')
+	# print the "prettified" file to stderr
+	#print(soup.prettify(), file=fe)
+	
+	# Find the transactions - Pre-Jan2024, find the parent^3 of the <button>
+	# xactions = soup.find_all("button", class_="font-semibold")
+	# print(first_xaction.parent.parent.prettify())
+	# print(list(xaction.parent.parent))
+	# for xaction in xactions:
+	# 	print_xaction(xaction.parent.parent.parent)
 
-def print_xaction(x):
+	# Post Jan2024, Vision created new CSS classes, easier to find
+	transactions = soup.find_all("div", class_="resultRowDetailContainer")
+	
+	for transaction in transactions:
+		# foo = transaction.prettify()
+		# print(transaction.prettify(), file=fe)
+		print_transaction(transaction)
+
+'''
+print_transaction() outputs each transaction.
+Each transaction consists of four columns of data displayed on the page
+Column 1:
+- Record number (clickable button to display record)
+- Date & Time mm/dd/yyyy hh:mm:ss AM/PM
+- Type e.g. "DEED", "DISCHARGE", "MORTGAGE", "EASEMENT", etc.
+- Book & Page B:#### P:####
+- Page Count: #
+Column 2: Parties
+- Party 1: (multiple lines)
+- Party 2: (multiple lines)
+Column 3: Legals
+- Frequently only contains "LYME"
+Column 4: Additional
+- Notes:
+- Return To:
+- Consideration:
+
+'''
+def print_transaction(x):
 	collectDate = datetime.now().strftime("%Y-%m-%d")
 	entire_contents = x.contents
 	# print(repr(entire_contents))
-	cols = x.find_all(class_="w-1/4")
-	# print(len(cols))
-	# print("Entire Transaction: ", len(entire))
-	# print(len(entire_contents), " items in entire")
+	# cols = x.find_all(class_="w-1/4") # pre-Jan2024, columns were tagged with the w-1/4 class
+	
+	cols = x.find_all(recursive=False)
 	transaction_line = print_firstcol(cols[0])
 	transaction_line += "\t" + print_partycol(cols[1])
 	transaction_line += "\t" + print_legalcol(cols[2])

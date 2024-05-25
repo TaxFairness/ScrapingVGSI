@@ -100,7 +100,7 @@ the beginning date to produce fewer than 200 results.
 
 Then use the Browser's "Inspect" facility to Copy the Outer HTML,
 and paste the information into a separate .html file representing
-that date range. Save the file in `AVA-GCRoD/HTML/MMMMYYYY.html`
+that date range. Save the file in `AVA-GCRoD/HTML/ddMMMyyyy.html`
 
 The `scrapingAVA.py` file sucks in a HTML file
 and produces a tab-delimited file that includes all the records. 
