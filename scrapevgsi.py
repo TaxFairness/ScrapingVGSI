@@ -35,6 +35,13 @@ from http.client import HTTPConnection
 """
 readNextVisionID(f)
 
+This is actually an iterator/generator/whatever it's called in Python...
+It returns the PID of the "next" property to examine.
+
+Formerly, it read a file of laboriously-collected PIDs from the Vision site.
+Changed simply to iterate across all PIDs from 1..1500, then 100000 to 103400
+(the point that we get more than XXX successive "Problem with that PID'" errors)
+
 Reads a line from the input file, and returns the three comma-separated fields.
 Ignore lines that begin with # (they're comments)
 Return "" to signal EOF)
@@ -45,21 +52,18 @@ Return "" to signal EOF)
 class VisionIDFile:
     def __init__(self, file):
         self.theFile = file
+        self.nextPID = 0 # Increment before returning it
     
     def readNextVisionID(self):
         
-        while True:
-            line = self.theFile.readline()
-            if line == "":
-                return []  # hit EOF
-            if line.find("#") != -1:
-                continue  # Comment line - keep looking
-            else:
-                break
-                
-        vals = line.strip().split(",")
-        return vals
-
+        # If we have exceeded maximum possible PID, return an empty array
+        if (self.nextPID >= 103400): # that's it - return empty array
+            return []
+        # Otherwise, increment the PID and get ready to return it
+        self.nextPID += 1
+        if (self.nextPID) == 1500: # not so fast, there's a big gap coming
+            self.nextPID = 100000
+        return [ str(self.nextPID) ]    # Must be an array with a string
 
 # IDs of DOM elements whose values should be plucked up and displayed
 domIDs = [
