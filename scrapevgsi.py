@@ -480,7 +480,7 @@ def main(argv=None):
         inStr = page.text
         if inStr.find(
                 'There was an error loading the parcel') >= 0:  # string present
-            output_string = "\tProblem loading parcel PID\t%s" % (thePID)
+            output_string = "%s\tProblem loading parcel PID\t" % (thePID)
             print(output_string, file=fo)
             continue
         
