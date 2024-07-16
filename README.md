@@ -57,7 +57,10 @@ Then...
 
 ### Enumerating PIDs
 
-**Here's the process for Enumerating PIDs. It takes ~20 minutes** 
+
+~~Here's the process for Enumerating PIDs. It takes ~20 minutes~~
+
+**No longer needed - `scrapevgsi.py` enumerates all PIDs in the sensible range**
 
 * Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
 * Enter each of the map numbers. They are `201` and `401 .. 422`
