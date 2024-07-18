@@ -123,7 +123,7 @@ The program outputs a file named `AVA_Records_YYYY-DD-MM_HH-MM-SS.tsv` in the _A
 _Tax Fairness/RawData/GCRoD-All-Data_**.XLSX** file
 and paste in this data
 * Append the new data to the "All Data" tab 
-* Export as **CSV** to _Tax Fairness/DefinitiveDataGCRoD-All-Data_**.CSV**
+* Export as **CSV** to _Tax Fairness/DefinitiveData/GCRoD-All-Data_**.CSV**
 and import into SQLite
 
 **Fixing "PLAN" entries:** These don't have a Book&Page entry, so the results
