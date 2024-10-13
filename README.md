@@ -1,14 +1,17 @@
 # Scraping the Property Tax Records
 
-A set of tools for processing data from both Vision property tax records (used in Lyme) and the AVA Fidlar deed registration system (used by Grafton County Register of Deeds - GCRoD).
+A set of tools for processing data from both
+Vision Government Solutions Incorporated (VGSI)
+property tax records (used in Lyme, NH) and the
+AVA Fidlar deed registration system
+(used by Grafton County Register of Deeds - GCRoD).
 
 ## scrapevgsi.py
 
-The `scrapevgsi.py` script retrieves PIDs ("VisionID"s) from a file, and outputs a tab-separated file that shows selected fields from the resulting page.
-The script also pauses a bit between requests from VGSI to avoid overloading the Vision server.
-
-The script reads the `./PIDs/PIDs-Sorted-ddMMMyyyy.csv` file named in **Run -> Edit Configurations...** 
-The script outputs several files to the current directory.
+The `scrapevgsi.py` script iterates across all pages of
+the tax records.
+The script outputs several files to the current directory
+with data from nearly all the fields on each page.
 These overwrite any files produced by previous runs.
 
 - `ScrapeDataXX.tsv`
@@ -17,53 +20,72 @@ These overwrite any files produced by previous runs.
 - `AssmtHistory.tsv`
 - `ApprlHistory.tsv`
 
-The `-d` debug option eliminates the delay between requests for faster testing.
-
-```
-cd ScrapingVGSI
-python ./scrapevgsi.py -i ./taxcardlookup-21Nov2021.txt 
-# or to debug...
-python ./scrapevgsi.py -d -i ./taxcardlookup-short.txt  
-```
+The script iterates through known PID ranges for properties,
+(see `ReadNextVisionID()` for details), retrieves each page,
+then uses `BeautifulSoup` to retrieve values from the page.
+It also converts dates to YYYY-MM-DD format and
+removes "\$" and "," from dollar amounts.
+The script pauses for a few seconds between requests from VGSI
+to avoid overloading the Vision server.
+The `-d` debug option eliminates the delay between requests
+for faster testing.
 
 ### Running with PyCharm (easiest)
 
 The PyCharm IDE has a configuration for `scrapevgsi`.
-It reads a file of PIDs that has been pre-built
-(see **Enumerating PIDs** below) and
-outputs the named/dated files in the top level directory.  
-
-**Optional first step** As an alternative to enumerating all the PIDs,
-update the list of PIDs manually by searching VGSI for sequential PIDs at: [VGSI Site for Lyme](https://gis.vgsi.com/lymeNH/Parcel.aspx?Pid=103255)
-Add them to the end of the CSV used as input.  
+It outputs the named/dated files in the top level directory.  
 
 ### Manual Processing after Scraping
 
 After the full set of records has been scraped into `.tsv` files,
 organize them by doing the following:
 
-- Check for errors:
-- Scan the ScrapeDataXX file for any "Can't reach the server" and fix those lines.
-(There shouldn't be any - the `scrapevgsi` program should recover from those errors.)
-- Scan that file for "Problem..." and comment out that PID from the input file
-- Rerun if necessary. 
+* Check for errors: Scan the ScrapeDataXX file for any "Can't reach 
+  the server" and fix those lines.
+  (There shouldn't be any - the `scrapevgsi` program should now
+  recover from those errors.)
+* Rerun if necessary. 
 
-Then...
+Then... 
 
-- Create a new folder named _ScrapedData-ddMMMyyy_
-- Copy all five output files to that folder
-- Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
-- (Optional) Update the `import_crunched_data.sql` file in _TaxFairness_ to import those files into a new set of tables.
+* Create a new folder named _ScrapedData-ddMMMyyy_
+* Copy all five output files to that folder
+* Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
+* Review the other _ScrapedData_ folders, and rename the new one 
+  to _ScrapedData##-ddMMMyyyy_ where **##** is the "next version"
+* In a text editor, modify the ScrapeDataXX file:
+  * Remove all the "Problem loading..." lines
+  * Change all _Version?_ to the next "version" for the
+    _RawData_ folder (see above)
+  * Save the _ScrapeDataXX_ file
+
+Final preparation for importing to SQLite:
+
+* While in the text editor (above), copy the entire contents,
+  and paste into a new tab (ScrapeData##) of the
+  _DefinitiveData/ScrapedData.xlsx_ file.
+* Copy that tab, and append to the main **All-Scraped-Data** tab
+* Ensure all date/dollar fields are in the correct format
+* Export the "all-data" tab to _ScrapedData.csv_,
+  replacing the previous copy
+* Use the _TaxFairness/mergehistory.sh_ script to merge all the
+  Assessment, Appraisal, Buildings, and Owner history files.
+* Update the `import_crunched_data.sql` file in
+  _TaxFairness_ to import those files into a new set of tables.
+* _NB: All five of these "scraped data" files are now moved into
+  canonical locations, so no change to the import file
+  is necessary._
 
 ### Enumerating PIDs
 
-
-~~Here's the process for Enumerating PIDs. It takes ~20 minutes~~
-
 **No longer needed - `scrapevgsi.py` enumerates all PIDs in the sensible range**
 
+_Here's the old process for Enumerating PIDs.
+Preserved here to document the process. It used to take ~20 minutes_
+
 * Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
-* Enter each of the map numbers. They are `201` and `401 .. 422`
+* Enter each of the map numbers.
+  In Lyme, they are `201` and `401 .. 422`
 * Click through each of that map's pages
 * Copy each of those pages. Use the Chrome extension ColumnCopy (I used version 0.5.0) to right-click and Copy Entire Table.
 * Paste into a spreadsheet
@@ -71,22 +93,6 @@ Then...
 * Save the full results as a "Raw Data" page, and protect that sheet
 * Make a copy and then manipulate into a CSV file with PID, Map, Lot
 * _That's it..._
-
-```
-# Map Numbers for Lyme
-201 and then ...
-401 .. 422
-```
-
-~~It may be possible to enumerate all PIDs from the Vision system
-instead of relying on a (potentially-incomplete) hand-entered list.
-The algorithm could do a search by Map, then iterate
-across all the pages of the result until a 500 Server error returns.~~
-
-_NOPE. The Vision software continually varies the "txtM" and "hdnM"
-fields of the POST post that make it hard to automate.
-It's easier to copy/paste the lines from all the individual web pages
-from each of the ~20 maps. See the procedure above._
 
 ## Scraping AVA
 
@@ -152,33 +158,9 @@ In April 2021, the Town of Lyme sent me a CSV file (txcardlookup-6Apr2021)
 that listed all properties by their VGSI "PID" along with Map/Lot
 (There's a new way to get the PIDs - see note above about enumerating the PIDs.)
 
-### Updates
-**17Aug2023** Update `scrapevgsi.py` to:
-
-* Run (most) values through plainValue() to remove \$, ",", and fix dates.
-This means that no manual processing is required on columns of the .tsv files 
-* Output files no longer have timestamp.
-They get organized into a separate folder with their date.
-This avoids proliferation of (unneeded) output files.
-* Fix line endings to avoid outputting blank lines
-* Change advice: now move ScrapedData-ddMMMyyyy to _TaxFairness_
-    
-**Jan2023** Update to `scrapevgsi.py` to recover from retrieval errors by waiting 20 seconds and retrying.
-Also reformat all columns for easy import (and remove manual processing).
-Also tweak `scrapeava.py` to separate the information from difficult columns.
-
-**11Dec2022** Retrieved full set of PIDs using procedure below.
-Ran `scrapevgsi.py` without incident to produce `ScrapedData5.csv`
-
-**21Nov2021**
-Remove lines from original Town file that are not in town's database
-(as shown in the OldVsNew PDF from Oct 2021)
+The program and process has evolved to be simpler.
+The procedure above documents what needs to be done.
 
 ### To Do
 
-* _DONE_ The `merge_history.sh` script in **TaxFairness** merges the history files. ~~Come up with a way to combine the XXXX_history files.
-They contain the latest information (generally, three years) from Vision.
-But the information will be lost when previous years' info gets pushed off
-by new years.
-This probably implies some fancy SQL import that replaces existing info
-new info from the same year (???).~~
+* _DONE_ The `merge_history.sh` script in **TaxFairness** merges the history files. 
