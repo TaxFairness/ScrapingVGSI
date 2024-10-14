@@ -109,9 +109,9 @@ the beginning date to produce fewer than 200 results.
 
 Then use the Browser's "Inspect" facility to Copy the Outer HTML,
 and paste the information into a separate .html file representing
-that date range. Save the file in `AVA-GCRoD/HTML/ddMMMyyyy.html`
+that date range. Save the file in `AVA-GCRoD/HTML/YYYY-MM-DD.html`
 
-The `scrapingAVA.py` file sucks in a HTML file
+In PyCharm, the `scrapingAVA.py` file sucks in a HTML file
 and produces a tab-delimited file that includes all the records. 
 **Run -> Edit configuration...** to read the proper HTML file.
 
@@ -141,14 +141,6 @@ Find its Transfer Tax by looking at the actual deed.
 If there's a Transfer Tax, record it in the rightmost column,
 otherwise enter '-' to indicate that someone has checked it.
 There's (almost) always a \$25 LCHIP entry; ignore it.
-
-### Notes on imports
-
-* The five files **GCRoD-1.html** .. **GCRoD-5.html** were retrieved 
-on 18Aug2022, each for a different date range to keep the record count
-under 200. 
-After processing by `scrapingAVA.py`, the tab-separated output is in
-**GCRoD-N.tsv**
 
 ## History
 
