@@ -14,11 +14,14 @@ The script outputs several files to the current directory
 with data from nearly all the fields on each page.
 These overwrite any files produced by previous runs.
 
-- `ScrapeDataXX.tsv`
-- `OwnerHistory.tsv`
-- `Buildings___.tsv`
-- `AssmtHistory.tsv`
-- `ApprlHistory.tsv`
+* `ScrapeDataXX.tsv`
+* `OwnerHistory.tsv`
+* `Buildings___.tsv`
+* `AssmtHistory.tsv`
+* `ApprlHistory.tsv`
+* `ExtraFeature.tsv`
+* `Outbuildings.tsv`
+* `SpecialLand_.tsv` 
 
 The script iterates through known PID ranges for properties,
 (see `ReadNextVisionID()` for details), retrieves each page,
@@ -49,7 +52,7 @@ organize them by doing the following:
 Then... 
 
 * Create a new folder named _ScrapedData-ddMMMyyy_
-* Copy all five output files to that folder
+* Copy all the output files to that folder
 * Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
 * Review the other _ScrapedData_ folders, and rename the new one 
   to _ScrapedData##-ddMMMyyyy_ where **##** is the "next version"
@@ -68,11 +71,12 @@ Final preparation for importing to SQLite:
 * Ensure all date/dollar fields are in the correct format
 * Export the "all-data" tab to _ScrapedData.csv_,
   replacing the previous copy
-* Use the _TaxFairness/mergehistory.sh_ script to merge all the
-  Assessment, Appraisal, Buildings, and Owner history files.
+* `cd TaxFairness; sh ./mergehistory.sh` to merge all the
+  history files (Assessment, Appraisal, Buildings, and Owner)
+  and the ExtraFeature, Outbuildings, and SpecialLand files.
 * Update the `import_crunched_data.sql` file in
   _TaxFairness_ to import those files into a new set of tables.
-* _NB: All five of these "scraped data" files are now moved into
+* _NB: All of the files retrieved by scraping are now moved into
   canonical locations, so no change to the import file
   is necessary._
 

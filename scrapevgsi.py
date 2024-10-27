@@ -407,7 +407,7 @@ def handleSpecialLand(theSoup, theID, pid):
     
     specialLandTable = theSoup.find(id=theID)
     if specialLandTable == None:
-        return "%s\tNo Special Land\n" % (pid)
+        return "" # "%s\tNo Special Land\n" % (pid)
     htRows = specialLandTable.find_all('tr')
     outputStr = ""
     for row in htRows:  # for each row of the special land table
@@ -436,10 +436,10 @@ def handleExtraFeatures(theSoup, theID, pid):
     
     extraFeatureTable = theSoup.find(id=theID)
     if extraFeatureTable == None:
-        return "%s\tNo Feature Table\n" % (pid)
+        return "" # "%s\tNo Feature Table\n" % (pid)
     htRows = extraFeatureTable.find_all('tr')
     outputStr = ""
-    for row in htRows:  # for each row of the special land table
+    for row in htRows:  # for each row of the Extra Features table
         cells = row.findChildren('td')  # get the cells into an array
         cellCols = []
         for cell in cells:
@@ -447,7 +447,7 @@ def handleExtraFeatures(theSoup, theID, pid):
                 cellCols.append(plainValue(cell.text))
         if len(cellCols) == 0:
             continue
-        if len(cellCols) == 1:  # "No Data ..."
+        if len(cellCols) == 1 & cellCols[0].find("No Data") != -1:  # "No Data ..."
             return ""
         if len(cellCols) != 0:
             cellCols.insert(0, pid)  # put pid at the front
