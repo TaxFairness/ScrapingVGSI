@@ -76,7 +76,7 @@ Final preparation for importing to SQLite:
   canonical locations, so no change to the import file
   is necessary._
 
-### Enumerating PIDs
+### ~~Enumerating PIDs~~
 
 **No longer needed - `scrapevgsi.py` enumerates all PIDs in the sensible range**
 

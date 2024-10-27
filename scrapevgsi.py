@@ -308,7 +308,7 @@ def printBuildingHeader():
 
 
 '''
-The main function
+handleBuildings - parse the Buildings table
 '''
 def handleBuildings(theSoup, theID, pid):
     now = datetime.now()
@@ -367,11 +367,103 @@ def handleBuildings(theSoup, theID, pid):
         buildingNumber += 1
 
     return retstr
+
+'''
+handle Outbuildings
+'''
+def handleOutbuildings(theSoup, theID, pid):
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    
+    outbuildingTable = theSoup.find(id=theID)
+    htRows = outbuildingTable.find_all('tr')
+    outputStr = ""
+    for row in htRows:  # for each row of the outbuilding table
+        cells = row.findChildren('td')  # get the cells into an array
+        cellCols = []
+        for cell in cells:
+            if cell:
+                cellCols.append(plainValue(cell.text))
+        if len(cellCols) == 0:
+            continue
+        if len(cellCols) == 1:  # "No Data for PID"
+            return ""
+        if len(cellCols) != 0:
+            cellCols.insert(0, pid)  # put pid at the front
+            sizeElems = cellCols[5].split(" ")  # Split the size from its units
+            cellCols[5] = sizeElems[0]          # e.g. "576.00 S.F."
+            cellCols.insert(6,sizeElems[1])     # into "576.00" and "S.F"
+            cellCols.append(current_date)
+            outputStr += "\t".join(cellCols)  # output all the columns
+            outputStr += "\n"  # and a newline
+    return outputStr
+    
+'''
+handle Special Land
+'''
+def handleSpecialLand(theSoup, theID, pid):
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    
+    specialLandTable = theSoup.find(id=theID)
+    if specialLandTable == None:
+        return "%s\tNo Special Land\n" % (pid)
+    htRows = specialLandTable.find_all('tr')
+    outputStr = ""
+    for row in htRows:  # for each row of the special land table
+        cells = row.findChildren('td')  # get the cells into an array
+        cellCols = []
+        for cell in cells:
+            if cell:
+                cellCols.append(plainValue(cell.text))
+        if len(cellCols) == 0:
+            continue
+        if len(cellCols) == 1:  # "No Data for PID"
+            return ""
+        if len(cellCols) != 0:
+            cellCols.insert(0, pid)  # put pid at the front
+            cellCols.append(current_date)
+            outputStr += "\t".join(cellCols)  # output all the columns
+            outputStr += "\n"  # and a newline
+    return outputStr
+
+'''
+handle Extra features
+'''
+def handleExtraFeatures(theSoup, theID, pid):
+    now = datetime.now()
+    current_date = now.strftime("%Y-%m-%d")
+    
+    extraFeatureTable = theSoup.find(id=theID)
+    if extraFeatureTable == None:
+        return "%s\tNo Feature Table\n" % (pid)
+    htRows = extraFeatureTable.find_all('tr')
+    outputStr = ""
+    for row in htRows:  # for each row of the special land table
+        cells = row.findChildren('td')  # get the cells into an array
+        cellCols = []
+        for cell in cells:
+            if cell:
+                cellCols.append(plainValue(cell.text))
+        if len(cellCols) == 0:
+            continue
+        if len(cellCols) == 1:  # "No Data ..."
+            return ""
+        if len(cellCols) != 0:
+            cellCols.insert(0, pid)  # put pid at the front
+            sizeElems = cellCols[3].split(" ")  # Split the size from its units
+            cellCols[3] = sizeElems[0]          # e.g. "576.00 S.F."
+            cellCols.insert(4,sizeElems[1])     # into "576.00" and "S.F"
+            cellCols.append(current_date)
+            outputStr += "\t".join(cellCols)  # output all the columns
+            outputStr += "\n"  # and a newline
+    return outputStr
+
+
 '''
 splitBookAndPage - split the book and page (in BBBB/PPPP format)
     into BBBB\tPPPP\t columns
 '''
-
 
 def splitBookAndPage(bnp):
     ary = bnp.text.split("/")
@@ -462,6 +554,9 @@ def main(argv=None):
     fapprl = open("ApprlHistory.tsv", "wt")  # Appraisal History
     fassmt = open("AssmtHistory.tsv", "wt")  # Assessment History
     fbldgs = open("Buildings___.tsv", "wt")  # Buildings
+    fobldg = open("Outbuildings.tsv", "wt")  # Outbuildings
+    fxfeat = open("ExtraFeature.tsv", "wt")  # Extra features
+    fsplnd = open("SpecialLand_.tsv", "wt")  # Special Land
 
     infile = VisionIDFile(fi)
     
@@ -471,8 +566,14 @@ def main(argv=None):
     print("PID\tOwner\tSale Price\tCertificate\tBook&Page\tBook\tPage\tInstrument\tSale Date\tCollectedOn", file=fowner)
     print("PID\tApp. Year\tImprovements\tLand\tTotal\tCollectedOn", file=fapprl)
     print("PID\tAss. Year\tImprovements\tLand\tTotal\tCollectedOn", file=fassmt)
+    print("PID\tCode\tDescription\tSubCode\tSubDescr\tSize\tUnits\tValue\tBldg#\tCollectedOn", file=fobldg)
+    print("PID\tCode\tDescription\tSize\tUnits\tValue\tBldg#\tCollectedOn", file=fxfeat)
+    print("PID\tCode\tDescription\tUnits\tUnitType\tCollectedOn", file=fsplnd)
     print(printBuildingHeader(), file=fbldgs)
     
+    '''
+    Start of Main Loop - iterate across all the entries in the VGSI database
+    '''
     recordCount = 0
     while True:
         recordCount += 1
@@ -592,12 +693,14 @@ def main(argv=None):
             appr = ""
         output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
         
-        # Tack on (fake) version number, time stamp, row counter in separate columns
+        # Tack on (empty/fake) version number, time stamp, row counter in separate columns
         output_string += "Version?\t%s\t%d" % (current_time, recordCount)
         print(output_string, file=fo)
+        
+        # Print to stdout so the person can track progress
         print(output_string)
 
-        # Output the recent ownership history into a separate file
+        # Append the sub-tables to their own files
         histStr = handleOwnerHistory(soup, "MainContent_grdSales", thePID)
         print(histStr, file=fowner, end="")
         # Output the history of the Appraisals
@@ -609,7 +712,16 @@ def main(argv=None):
         # Output information about each building
         histStr = handleBuildings(soup, "", thePID)
         print(histStr, file=fbldgs, end="")
-        
+        # Output information about the outbuildings
+        histStr = handleOutbuildings(soup, "MainContent_grdOb", thePID)
+        print(histStr, file=fobldg, end="")
+        # Output information about the Special Land table
+        histStr = handleSpecialLand(soup, "MainContent_grdSpclLand", thePID)
+        print(histStr, file=fsplnd, end="")
+        # Output information about the Extra features
+        histStr = handleExtraFeatures(soup, "MainContent_grdXf", thePID)
+        print(histStr, file=fxfeat, end="")
+
     # And we're done
     beep()
     time.sleep(0.5)
