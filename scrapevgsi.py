@@ -78,7 +78,17 @@ domIDs = [
     ["MainContent_lblUseCode", "Land Use Code"],
     ["MainContent_lblUseCodeDescription", "Description"],
     ["MainContent_lblZone", "Zoning District"],
+    ["MainContent_lblNbhd", "Neighborhood"],
+    ["MainContent_lblAltApproved", "AltLandApproved"],
+    ["MainContent_lblLndCategory", "Category"],
+    ["MainContent_lblLndFront", "Frontage"],
+    ["MainContent_lblDepth", "Depth"],
+    ["MainContent_lblLndAsmt", "LandAsmt"],
+    ["MainContent_lblLndAppr", "LandAppr"],
     ["MainContent_lblBldCount", "# Buildings"],
+    ["MainContent_lblOwner", "Owner of Record"],
+    ["MainContent_lblCoOwner", "Co-owner"],
+    ["MainContent_lblAddr1", "LabelAddress"]
 ]
 # Don't retrieve here - use the Appraisal/Assessment tables at bottom of page
 # tableIDs = [
@@ -461,6 +471,7 @@ def handleExtraFeatures(theSoup, theID, pid):
 
 
 '''
+
 splitBookAndPage - split the book and page (in BBBB/PPPP format)
     into BBBB\tPPPP\t columns
 '''

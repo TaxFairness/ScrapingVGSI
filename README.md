@@ -43,42 +43,46 @@ It outputs the named/dated files in the top level directory.
 After the full set of records has been scraped into `.tsv` files,
 organize them by doing the following:
 
-* Check for errors: Scan the ScrapeDataXX file for any "Can't reach 
-  the server" and fix those lines.
-  (There shouldn't be any - the `scrapevgsi` program should now
-  recover from those errors.)
-* Rerun if necessary. 
-
-Then... 
-
 * Create a new folder named _ScrapedData-ddMMMyyy_
-* Copy all the output files to that folder
+* Move all the output files to that folder
 * Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
 * Review the other _ScrapedData_ folders, and rename the new one 
   to _ScrapedData##-ddMMMyyyy_ where **##** is the "next version"
 * In a text editor, modify the ScrapeDataXX file:
-  * Remove all the "Problem loading..." lines
+  * Remove all the "Problem loading..." lines (there will be many)
   * Change all _Version?_ to the next "version" for the
     _RawData_ folder (see above)
   * Save the _ScrapeDataXX_ file
 
 Final preparation for importing to SQLite:
 
-* While in the text editor (above), copy the entire contents,
-  and paste into a new tab (ScrapeData##) of the
-  _DefinitiveData/ScrapedData.xlsx_ file.
-* Copy that tab, and append to the main **All-Scraped-Data** tab
-* Ensure all date/dollar fields are in the correct format
-* Export the "all-data" tab to _ScrapedData.csv_,
-  replacing the previous copy
-* `cd TaxFairness; sh ./mergehistory.sh` to merge all the
-  history files (Assessment, Appraisal, Buildings, and Owner)
-  and the ExtraFeature, Outbuildings, and SpecialLand files.
-* Update the `import_crunched_data.sql` file in
-  _TaxFairness_ to import those files into a new set of tables.
-* _NB: All of the files retrieved by scraping are now moved into
-  canonical locations, so no change to the import file
-  is necessary._
+1. **Update the _DefinitiveData/ScrapedData.xlsx_ file**
+
+	* While in the text editor (above), copy the entire contents,
+	  and paste into a new tab (ScrapeData##) of the
+	  * Copy that tab's data, and append to the main **All-Scraped-Data** tab
+	* Ensure all date/dollar fields are in the correct format
+	* Export the "all-data" tab to _ScrapedData.csv_,
+	  replacing the previous copy
+2. **Update _Create\_Property\_in\_Lyme\_db.sql_** to use the
+  correct `CollectedOn` date so that the `CleanScrapedData`
+  view shows the latest data.
+3. **Update the "merged history" files**
+	* `cd TaxFairness; sh ./mergehistory.sh` to merge all the
+	  history files (Assessment, Appraisal, Buildings, and Owner)
+	  and the ExtraFeature, Outbuildings, and SpecialLand files.
+4. **Update _import\_crunched\_data.sql_** (if necessary) in
+	  _TaxFairness_ to import the new files.
+	  _NB: All of the files retrieved by scraping are now moved into
+	  canonical locations, so no change to the import file
+	  is necessary._
+5. **Rebuild the entire database**
+  from all the files using `sh build_database.sh` 
+  It's OK to run it multiple times - each run deletes
+  the old database and creates a new copy. Be sure to:
+   * Eliminate any error messages displayed in the import process
+   * Wait 5 seconds for DB4S to open and display the data
+   * Remove the old and import the new SQLite database into qStudio
 
 ### ~~Enumerating PIDs~~
 
