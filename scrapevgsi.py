@@ -19,7 +19,7 @@ Output is several tab-delimited files written to the current directory:
 import sys
 import argparse
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 import time
 from datetime import datetime
 from playsound import playsound
@@ -52,7 +52,7 @@ Return "" to signal EOF)
 class VisionIDFile:
     def __init__(self, file):
         self.theFile = file
-        self.nextPID = 0 # Increment before returning it
+        self.nextPID = 0 # Start at zero; increment before returning it
     
     def readNextVisionID(self):
         
@@ -134,6 +134,9 @@ def displayHeading():
     # Print the heading row, with all the column names
     output_string = ""
     for x in range(len(domIDs)):
+        if domIDs[x][1] == "Street Address": # pre-process Street Address
+            output_string += "StreetNum\tStreetName\t"
+            continue
         output_string += "%s\t" % domIDs[x][1]
         if domIDs[x][1] == "MBLU":  # add column headings for expanded MBLU
             output_string += "Map\tLot\tUnit\tSub\t"
@@ -479,6 +482,17 @@ splitBookAndPage - split the book and page (in BBBB/PPPP format)
 def splitBookAndPage(bnp):
     ary = bnp.text.split("/")
     return ary
+'''
+parse_street_name() - return street number and street name
+take "123 main street" -> "123", "main street"
+take "   flowage rights" -> "", "flowage rights"
+'''
+def parse_street_name(s):
+    match = re.match(r'([-+\ \d]+)(\s+[a-zA-Z].*)', s)
+    if match:
+        digits, remainder = match.groups()
+        return digits.strip() or "", remainder.strip()
+    return "", ""
 
 '''
 beep - play a short beep sound
@@ -568,6 +582,7 @@ def main(argv=None):
     fobldg = open("Outbuildings.tsv", "wt")  # Outbuildings
     fxfeat = open("ExtraFeature.tsv", "wt")  # Extra features
     fsplnd = open("SpecialLand_.tsv", "wt")  # Special Land
+    fssupp = open("Suppressed__.tsv", "wt")  # Information Suppressed
 
     infile = VisionIDFile(fi)
     
@@ -580,27 +595,39 @@ def main(argv=None):
     print("PID\tCode\tDescription\tSubCode\tSubDescr\tSize\tUnits\tValue\tBldg#\tCollectedOn", file=fobldg)
     print("PID\tCode\tDescription\tSize\tUnits\tValue\tBldg#\tCollectedOn", file=fxfeat)
     print("PID\tCode\tDescription\tUnits\tUnitType\tCollectedOn", file=fsplnd)
+    print("Protected Parcel PIDs", file=fssupp)
     print(printBuildingHeader(), file=fbldgs)
     
     '''
     Start of Main Loop - iterate across all the entries in the VGSI database
     '''
     recordCount = 0
+    skipped_pid = False
     while True:
         recordCount += 1
         [page, thePID] = getNextPage(infile, fe)  # Get the next record from Vision
         
-        if page is None:
-            break
+        if page is None:    # None signals end of data
+            break           # break to exit the program
         
-        inStr = page.text
+        inStr = page.text   # Check for non-existent PID
         if inStr.find(
-                'There was an error loading the parcel') >= 0:  # string present
+                'There was an error loading the parcel') >= 0:  # if this error present
+            skipped_pid = True
             output_string = "%s\tProblem loading parcel PID\t" % (thePID)
             print(output_string, file=fo)
+            print(".", end="")      # print a "." (no newline) to show we're making progress]
             continue
+        elif skipped_pid:
+            skipped_pid = False
+            print("")               # print a newline to end line of dots
         
         soup = BeautifulSoup(page.content, "html.parser")
+        
+        result = soup.find(id=domIDs[0][0])     # Look for an element ID (any one would do - this uses PID)
+        if result is None:                      # If not present, log it, presumably it's "suppresed"
+            print("%s\tInformation suppressed due to the request of the taxpayer" % thePID, file=fssupp)
+            continue                            # continue with the next PID
         
         now = datetime.now()
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -609,7 +636,26 @@ def main(argv=None):
         output_string = ""
         for x in range(len(domIDs)):
             result = soup.find(id=domIDs[x][0])
+            
+            # Pre-output_string processing
+            if domIDs[x][0] == "MainContent_lblAddr1":  # patch up label address to remove <br> tag
+                ary = result.contents
+                for i in range(len(ary)):
+                    if isinstance(ary[i], element.Tag):
+                        ary[i] = ""
+                output_string += "%s\t" % " ".join(ary).strip()
+                continue
+            if domIDs[x][0] == "MainContent_lblLocation":  # Split street number and name
+                # pattern = r"^\s*(\d)\s*(.*)" # groups are leading blanks, number, street name
+                # match = re.match(pattern, result.text)
+                digits, remainder = parse_street_name(result.text)
+                output_string += "%s\t%s\t" % (digits.strip(), remainder.strip())
+                continue
+            
+            # standard processing for ordinary value
             output_string += "%s\t" % plainValue(result.text)
+            
+            # Post-output_string processing - append to the retrieved value
             if domIDs[x][0] == "MainContent_lblBp": # split Book&Page
                 ary = splitBookAndPage(result)
                 output_string += "%s\t%s\t" % (ary[0], ary[1])
@@ -704,12 +750,12 @@ def main(argv=None):
             appr = ""
         output_string += "%s\t%s\t%s\t" % (appr_imp, appr_land, appr_tot)
         
-        # Tack on (empty/fake) version number, time stamp, row counter in separate columns
+        # Tack on (empty/fake) version number, time stamp, row counter
         output_string += "Version?\t%s\t%d" % (current_time, recordCount)
         print(output_string, file=fo)
         
-        # Print to stdout so the person can track progress
-        print(output_string)
+        # Print to console/stdout so the person can track progress
+        print("%s..." % output_string[:100])
 
         # Append the sub-tables to their own files
         histStr = handleOwnerHistory(soup, "MainContent_grdSales", thePID)
