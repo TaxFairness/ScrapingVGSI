@@ -22,7 +22,9 @@ import requests
 from bs4 import BeautifulSoup, element
 import time
 from datetime import datetime
-from playsound import playsound
+from playsound3 import playsound
+# import ssl
+
 # import random
 
 import re
@@ -168,7 +170,7 @@ def handleOwnerHistory(theSoup, theID, pid):
     htRows = historyTable.find_all('tr')
     outputStr = ""
     for row in htRows:                          # for each row of the history table
-        cells = row.findChildren('td')          # get the cells into an array
+        cells = row.find_all('td')          # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell != []:
@@ -207,7 +209,7 @@ def handleAppAssHistory(theSoup, theID, pid):
     htRows = historyTable.find_all('tr')
     outputStr = ""
     for row in htRows:                          # for each row of the history table
-        cells = row.findChildren('td')          # get the cells into an array
+        cells = row.find_all('td')          # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell:
@@ -347,10 +349,10 @@ def handleBuildings(theSoup, theID, pid):
             tableID = subsBuilding(buildingAttributeTable,buildingNumber)
             table = theSoup.find('table',{'id': tableID})
             theAttr = buildingAttrs[x]
-            label_cell = table.find('td', text=theAttr)
+            label_cell = table.find('td', string=theAttr)
             if label_cell == None:  # does the label need a ":"?
                 theAttr += ":"
-                label_cell = table.find('td', text=theAttr)
+                label_cell = table.find('td', string=theAttr)
             if label_cell != None: #
                 value_cell = label_cell.find_next_sibling('td')
                 theValue = value_cell.text
@@ -392,7 +394,7 @@ def handleOutbuildings(theSoup, theID, pid):
     htRows = outbuildingTable.find_all('tr')
     outputStr = ""
     for row in htRows:  # for each row of the outbuilding table
-        cells = row.findChildren('td')  # get the cells into an array
+        cells = row.find_all('td')  # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell:
@@ -424,7 +426,7 @@ def handleSpecialLand(theSoup, theID, pid):
     htRows = specialLandTable.find_all('tr')
     outputStr = ""
     for row in htRows:  # for each row of the special land table
-        cells = row.findChildren('td')  # get the cells into an array
+        cells = row.find_all('td')  # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell:
@@ -453,7 +455,7 @@ def handleExtraFeatures(theSoup, theID, pid):
     htRows = extraFeatureTable.find_all('tr')
     outputStr = ""
     for row in htRows:  # for each row of the Extra Features table
-        cells = row.findChildren('td')  # get the cells into an array
+        cells = row.find_all('td')  # get the cells into an array
         cellCols = []
         for cell in cells:
             if cell:
@@ -492,6 +494,8 @@ def parse_street_name(s):
     if match:
         digits, remainder = match.groups()
         return digits.strip() or "", remainder.strip()
+    else:
+        return "",s
     return "", ""
 
 '''
@@ -536,6 +540,7 @@ def getNextPage(infile, fe):
             beep()
             output_string = "Exception retrieving PID %s: Waiting to retry..." % (
                 ids[0])
+            # print(e)
             print(output_string, file=fe)
             page = None
             time.sleep(20)
@@ -682,7 +687,7 @@ def main(argv=None):
         table = soup.find(
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdSales")
-        rows = table.findAll(lambda tag: tag.name == 'tr')
+        rows = table.find_all(lambda tag: tag.name == 'tr')
         prevSalesStr = ""
         for x in range(1, len(rows)):
             vals = rows[x].contents
@@ -699,7 +704,7 @@ def main(argv=None):
         table = soup.find(
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAsmt")
-        rows = table.findAll(lambda tag: tag.name == 'tr')
+        rows = table.find_all(lambda tag: tag.name == 'tr')
         ass_imp = ""
         ass_land = ""
         ass_tot = ""
@@ -726,7 +731,7 @@ def main(argv=None):
         table = soup.find(
             lambda tag: tag.name == 'table' and tag.has_attr('id') and tag[
                 'id'] == "MainContent_grdHistoryValuesAppr")
-        rows = table.findAll(lambda tag: tag.name == 'tr')
+        rows = table.find_all(lambda tag: tag.name == 'tr')
         # First get Current Appraised Improvements/Land/Total
         appr_imp = ""
         appr_land = ""
