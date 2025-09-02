@@ -22,6 +22,7 @@ These overwrite any files produced by previous runs.
 * `ExtraFeature.tsv`
 * `Outbuildings.tsv`
 * `SpecialLand_.tsv` 
+* `Suppressed__.tsv`
 
 The script iterates through known PID ranges for properties,
 (see `ReadNextVisionID()` for details), retrieves each page,
@@ -43,9 +44,9 @@ It outputs the named/dated files in the top level directory.
 After the full set of records has been scraped into `.tsv` files,
 organize them by doing the following:
 
-* Create a new folder named _ScrapedData-ddMMMyyy_
+* Create a new folder named _ScrapedData-ddMMMyyyy_
 * Move all the output files to that folder
-* Move that folder to the _TaxFairness/RawData/ScrapedData_ folder
+* Move that new folder to the _TaxFairness/RawData/ScrapedData_ folder
 * Review the other _ScrapedData_ folders, and rename the new one 
   to _ScrapedData##-ddMMMyyyy_ where **##** is the "next version"
 * In a text editor, modify the ScrapeDataXX file:
@@ -59,19 +60,20 @@ Final preparation for importing to SQLite:
 1. **Update the _DefinitiveData/ScrapedData.xlsx_ file**
 
 	* While in the text editor (above), copy the entire contents,
-	  and paste into a new tab (ScrapeData##) of the
-	  * Copy that tab's data, and append to the main **All-Scraped-Data** tab
-	* Ensure all date/dollar fields are in the correct format
+	  and paste into a new tab (ScrapeData##) of the `.xlsx` file
+    * Copy that tab's data, and append to the main **All-Scraped-Data** tab
+	* Ensure all date/dollar fields in the "all-data" tab are in the correct format
 	* Export the "all-data" tab to _ScrapedData.csv_,
 	  replacing the previous copy
-2. **Update _Create\_Property\_in\_Lyme\_db.sql_** to use the
-  correct `CollectedOn` date so that the `CleanScrapedData`
-  view shows the latest data.
+2. **Update** the `CollectedOn` date in the
+   **_Create\_Property\_in\_Lyme\_db.sql_** file 
+   to match the date of the collection so the `CleanScrapedData`
+   view shows the latest data.
 3. **Update the "merged history" files**
 	* `cd TaxFairness; sh ./mergehistory.sh` to merge all the
 	  history files (Assessment, Appraisal, Buildings, and Owner)
 	  and the ExtraFeature, Outbuildings, and SpecialLand files.
-4. **Update _import\_crunched\_data.sql_** (if necessary) in
+4. _(Optional)_ **Update _import\_crunched\_data.sql_** in
 	  _TaxFairness_ to import the new files.
 	  _NB: All of the files retrieved by scraping are now moved into
 	  canonical locations, so no change to the import file
@@ -115,7 +117,8 @@ search across date ranges that produce fewer than 200 results.
 Begin the process at the final date of interest, then keep adjusting
 the beginning date to produce fewer than 200 results.
 
-Then use the Browser's "Inspect" facility to Copy the Outer HTML,
+Then use the Browser's "Inspect" facility to Copy the Outer HTML
+on the `body` tag,
 and paste the information into a separate .html file representing
 that date range. Save the file in `AVA-GCRoD/HTML/YYYY-MM-DD.html`
 
@@ -148,7 +151,7 @@ You must manually shift the entries to the right to produce the CSV file.
 Find its Transfer Tax by looking at the actual deed. 
 If there's a Transfer Tax, record it in the rightmost column,
 otherwise enter '-' to indicate that someone has checked it.
-There's (almost) always a \$25 LCHIP entry; ignore it.
+There's (almost) always a \$25 (or \$40) LCHIP entry; ignore it.
 
 ## History
 

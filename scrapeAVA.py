@@ -33,7 +33,7 @@ def main(argv=None):
 	try:
 		parser = argparse.ArgumentParser(description=__doc__)
 		parser.add_argument("-i", '--infile', nargs='?',
-							type=argparse.FileType('rU'), default=sys.stdin)
+							type=argparse.FileType('r'), default=sys.stdin)
 		# parser.add_argument("-o", '--outfile', nargs='?',
 		# 					type=argparse.FileType('w'), default=sys.stdout)
 		parser.add_argument("-e", '--errfile', nargs='?',
