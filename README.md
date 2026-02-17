@@ -61,7 +61,8 @@ Final preparation for importing to SQLite:
 
 	* While in the text editor (above), copy the entire contents,
 	  and paste into a new tab (ScrapeData##) of the `.xlsx` file
-    * Copy that tab's data, and append to the main **All-Scraped-Data** tab
+	* Save the `.xlsx`
+   * Copy that tab's data, and append to the main **All-Scraped-Data** tab
 	* Ensure all date/dollar fields in the "all-data" tab are in the correct format
 	* Export the "all-data" tab to _ScrapedData.csv_,
 	  replacing the previous copy
@@ -84,25 +85,7 @@ Final preparation for importing to SQLite:
   the old database and creates a new copy. Be sure to:
    * Eliminate any error messages displayed in the import process
    * Wait 5 seconds for DB4S to open and display the data
-   * Remove the old and import the new SQLite database into qStudio
-
-### ~~Enumerating PIDs~~
-
-**No longer needed - `scrapevgsi.py` enumerates all PIDs in the sensible range**
-
-_Here's the old process for Enumerating PIDs.
-Preserved here to document the process. It used to take ~20 minutes_
-
-* Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
-* Enter each of the map numbers.
-  In Lyme, they are `201` and `401 .. 422`
-* Click through each of that map's pages
-* Copy each of those pages. Use the Chrome extension ColumnCopy (I used version 0.5.0) to right-click and Copy Entire Table.
-* Paste into a spreadsheet
-* For extra credit, add a "page number" column to track each map's Page
-* Save the full results as a "Raw Data" page, and protect that sheet
-* Make a copy and then manipulate into a CSV file with PID, Map, Lot
-* _That's it..._
+   * Remove the old SQLite database and import the new  into QStudio
 
 ## Scraping AVA
 
@@ -166,4 +149,26 @@ The procedure above documents what needs to be done.
 
 ### To Do
 
+
+### Done/No longer needed
+
 * _DONE_ The `merge_history.sh` script in **TaxFairness** merges the history files. 
+
+* _DONE_ Enumerating PIDs
+
+	**No longer needed - `scrapevgsi.py` enumerates all PIDs in the sensible range**
+	
+	_Here's the old process for Enumerating PIDs.
+	Preserved here to document the process. It used to take ~20 minutes_
+	
+	* Go to the [VGSI MBLU page.](https://gis.vgsi.com/lymeNH/Search.aspx)
+	* Enter each of the map numbers.
+	  In Lyme, they are `201` and `401 .. 422`
+	* Click through each of that map's pages
+	* Copy each of those pages. Use the Chrome extension ColumnCopy (I used version 0.5.0) to right-click and Copy Entire Table.
+	* Paste into a spreadsheet
+	* For extra credit, add a "page number" column to track each map's Page
+	* Save the full results as a "Raw Data" page, and protect that sheet
+	* Make a copy and then manipulate into a CSV file with PID, Map, Lot
+	* _That's it..._
+
